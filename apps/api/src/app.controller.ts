@@ -2,6 +2,8 @@ import { Controller, Get, Inject } from '@nestjs/common';
 import { AppService } from './app.service';
 import { DATABASE_CONNECTION } from './database';
 import { sql } from 'drizzle-orm';
+import { Public, CurrentUser } from './auth';
+import type { AuthUser } from './auth/auth.service';
 
 @Controller()
 export class AppController {
@@ -10,11 +12,13 @@ export class AppController {
     @Inject(DATABASE_CONNECTION) private readonly db: any,
   ) {}
 
+  @Public()
   @Get()
   getHello(): string {
     return this.appService.getHello();
   }
 
+  @Public()
   @Get('health')
   async healthCheck() {
     try {
@@ -33,5 +37,15 @@ export class AppController {
         timestamp: new Date().toISOString(),
       };
     }
+  }
+
+  @Get('me')
+  getProfile(@CurrentUser() user: AuthUser) {
+    return {
+      id: user.id,
+      email: user.email,
+      name: user.name,
+      image: user.image,
+    };
   }
 }

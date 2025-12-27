@@ -5,6 +5,9 @@
     "paths": {
       "@/*": ["./src/*"]
     },
+    "skipLibCheck": true,
+    "declaration": false,
+    "declarationMap": false,
     "plugins": [
       {
         "name": "next"
