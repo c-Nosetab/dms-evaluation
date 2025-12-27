@@ -12,8 +12,11 @@ const geistMono = localFont({
 });
 
 export const metadata: Metadata = {
-  title: "DMS - Document Management System",
-  description: "A modern document management solution",
+  title: "Squirrel Away - Store it. Find it. Keep it safe.",
+  description: "A modern document management solution for storing and organizing your files securely.",
+  icons: {
+    icon: "/acorn.ico",
+  },
 };
 
 export default function RootLayout({
