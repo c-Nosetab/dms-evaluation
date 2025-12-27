@@ -1,5 +1,5 @@
 import { Global, Module } from '@nestjs/common';
-import { drizzle } from 'drizzle-orm/postgres-js';
+import { drizzle, PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 import postgres from 'postgres';
 import {
   pgTable,
@@ -39,7 +39,7 @@ export const accounts = pgTable(
   },
   (account) => [
     primaryKey({ columns: [account.provider, account.providerAccountId] }),
-  ]
+  ],
 );
 
 export const sessions = pgTable('session', {
@@ -61,10 +61,13 @@ export const verificationTokens = pgTable(
     primaryKey({
       columns: [verificationToken.identifier, verificationToken.token],
     }),
-  ]
+  ],
 );
 
 export const schema = { users, accounts, sessions, verificationTokens };
+
+// Export database type for type-safe injection
+export type Database = PostgresJsDatabase<typeof schema>;
 
 @Global()
 @Module({

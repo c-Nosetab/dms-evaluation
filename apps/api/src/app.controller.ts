@@ -1,6 +1,6 @@
 import { Controller, Get, Inject } from '@nestjs/common';
 import { AppService } from './app.service';
-import { DATABASE_CONNECTION } from './database';
+import { DATABASE_CONNECTION, Database } from './database';
 import { sql } from 'drizzle-orm';
 import { Public, CurrentUser } from './auth';
 import type { AuthUser } from './auth/auth.service';
@@ -9,7 +9,7 @@ import type { AuthUser } from './auth/auth.service';
 export class AppController {
   constructor(
     private readonly appService: AppService,
-    @Inject(DATABASE_CONNECTION) private readonly db: any,
+    @Inject(DATABASE_CONNECTION) private readonly db: Database,
   ) {}
 
   @Public()

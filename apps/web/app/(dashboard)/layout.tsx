@@ -1,6 +1,6 @@
-import { auth } from '@/lib/auth';
+import Image from 'next/image';
+import { auth, signOut } from '@/lib/auth';
 import { redirect } from 'next/navigation';
-import { signOut } from '@/lib/auth';
 
 export default async function DashboardLayout({
   children,
@@ -23,10 +23,12 @@ export default async function DashboardLayout({
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-2">
               {session.user?.image && (
-                <img
+                <Image
                   src={session.user.image}
                   alt={session.user.name || 'User'}
-                  className="w-8 h-8 rounded-full"
+                  width={32}
+                  height={32}
+                  className="rounded-full"
                 />
               )}
               <span className="text-sm text-foreground">

@@ -1,6 +1,11 @@
 import { Injectable, Inject } from '@nestjs/common';
 import { eq, and, gt } from 'drizzle-orm';
-import { DATABASE_CONNECTION, sessions, users } from '../database/database.module';
+import {
+  DATABASE_CONNECTION,
+  Database,
+  sessions,
+  users,
+} from '../database/database.module';
 
 export interface AuthUser {
   id: string;
@@ -9,14 +14,19 @@ export interface AuthUser {
   image: string | null;
 }
 
+interface SessionWithUser {
+  sessionToken: string;
+  userId: string;
+  expires: Date;
+  user: AuthUser;
+}
+
 @Injectable()
 export class AuthService {
-  constructor(
-    @Inject(DATABASE_CONNECTION) private readonly db: any,
-  ) {}
+  constructor(@Inject(DATABASE_CONNECTION) private readonly db: Database) {}
 
   async validateSession(sessionToken: string): Promise<AuthUser | null> {
-    const result = await this.db
+    const result: SessionWithUser[] = await this.db
       .select({
         sessionToken: sessions.sessionToken,
         userId: sessions.userId,
@@ -33,8 +43,8 @@ export class AuthService {
       .where(
         and(
           eq(sessions.sessionToken, sessionToken),
-          gt(sessions.expires, new Date())
-        )
+          gt(sessions.expires, new Date()),
+        ),
       )
       .limit(1);
 
@@ -46,7 +56,7 @@ export class AuthService {
   }
 
   async getUserById(userId: string): Promise<AuthUser | null> {
-    const result = await this.db
+    const result: AuthUser[] = await this.db
       .select({
         id: users.id,
         email: users.email,

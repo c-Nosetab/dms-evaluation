@@ -4,6 +4,10 @@ import { Strategy } from 'passport-custom';
 import { Request } from 'express';
 import { AuthService, AuthUser } from './auth.service';
 
+interface CookiesDict {
+  [key: string]: string | undefined;
+}
+
 @Injectable()
 export class SessionStrategy extends PassportStrategy(Strategy, 'session') {
   constructor(private readonly authService: AuthService) {
@@ -15,11 +19,12 @@ export class SessionStrategy extends PassportStrategy(Strategy, 'session') {
     // Cookie name depends on environment:
     // - __Secure-authjs.session-token (production with HTTPS)
     // - authjs.session-token (development)
+    const cookies = (req.cookies || {}) as CookiesDict;
     const sessionToken =
-      req.cookies?.['__Secure-authjs.session-token'] ||
-      req.cookies?.['authjs.session-token'] ||
-      req.cookies?.['next-auth.session-token'] ||
-      req.cookies?.['__Secure-next-auth.session-token'];
+      cookies['__Secure-authjs.session-token'] ||
+      cookies['authjs.session-token'] ||
+      cookies['next-auth.session-token'] ||
+      cookies['__Secure-next-auth.session-token'];
 
     if (!sessionToken) {
       throw new UnauthorizedException('No session token found');
