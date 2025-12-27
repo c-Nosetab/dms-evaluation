@@ -5,6 +5,7 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { DatabaseModule } from './database';
 import { AuthModule, SessionAuthGuard } from './auth';
+import { StorageModule } from './storage';
 
 @Module({
   imports: [
@@ -14,6 +15,7 @@ import { AuthModule, SessionAuthGuard } from './auth';
     }),
     DatabaseModule,
     AuthModule,
+    StorageModule,
   ],
   controllers: [AppController],
   providers: [
