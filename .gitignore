@@ -1,8 +1,5 @@
 # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
-# Claude Code - ignore local settings but keep project config
-.claude/*
-!.claude/CLAUDE.md
 # Dependencies
 node_modules
 .pnp
