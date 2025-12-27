@@ -1,0 +1,8 @@
+0:00 Okay, so let's explain how I utilize AI. Um, so I typically utilize, uh, Cloud Code, uh, alongside with Cursor and Cursor's IDE.
+0:12 Uh, but I go about it in a couple different steps. Uh, at the beginning of a day or a project, I work on setting up the AI context.
+0:20 I'll typically set up a documents folder or the Cloud folder and that sort of thing. You and ensure that there's a lot of documentation on what the project is, um, what, um, what the rules are, what actions can they do, uh, versus need permission versus never do, uh, that sort of thing.
+0:38 Um, and then during actual code, like, development, uh, I'm constantly reviewing every piece of code, even though age models like, Opus are absolutely astounding, uh, some of my friends with tens of years of experience have admitted that they believe Opus can write better code than them.
+0:57 Um, so, but I'm constantly going to be reviewing to make sure that it's following the right context and that sort of thing.
+1:04 Um, I also have it review all the file structure and that sort of thing, making sure it's utilizing components. Uh, debugging is a, is a breeze.
+1:12 This is with AI, uh, very much, uh, a lot easier to, uh, implement. Um, and then from a, like, code review, GitHub, uh, I'll set up GitHub Actions to have another agent on PRs review the code for security issues, performance issues, that sort of thing.
+1:28 Um, but yes, it's absolutely amazing.
