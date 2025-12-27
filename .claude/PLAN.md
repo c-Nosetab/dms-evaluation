@@ -179,7 +179,7 @@ module.exports = {
 Core functionality that creates a working demo.
 
 **Features:**
-- [ ] User authentication (Google OAuth via NextAuth)
+- [x] User authentication (Google + GitHub OAuth via NextAuth)
 - [ ] File upload to S3/R2
 - [ ] File list view with metadata
 - [ ] File download
@@ -699,50 +699,50 @@ We'll leverage Claude Code plugins throughout development:
 - **`frontend-design` skill** - For creating polished, production-grade UI components
 
 ### Phase 0: Project Setup (~1-2 hours)
-- [ ] Initialize Next.js project with App Router
-- [ ] Initialize NestJS project
-- [ ] Set up monorepo structure (Turborepo or npm workspaces)
-- [ ] Configure Tailwind + shadcn/ui
-- [ ] Set up PostgreSQL on Railway
-- [ ] Configure environment variables
-- [ ] Set up S3 bucket or R2
+- [x] Initialize Next.js project with App Router
+- [x] Initialize NestJS project
+- [x] Set up monorepo structure (Turborepo or npm workspaces)
+- [x] Configure Tailwind + shadcn/ui
+- [x] Set up PostgreSQL on Railway
+- [x] Configure environment variables
+- [x] Set up S3 bucket or R2
 
 ### Phase 1: Build Phase A (MVP) (~8-10 hours)
 **Iterative Workflow:** Complete → Review → Validate → Commit → Push → PR → Merge → Repeat
 
-#### Step 1.1: Project Skeleton & Connections (~1-2 hrs)
-- [ ] Initialize Turborepo monorepo structure
-- [ ] Create Next.js app (apps/web)
-- [ ] Create NestJS app (apps/api)
-- [ ] Set up shared packages (packages/shared-types)
-- [ ] Configure Tailwind + shadcn/ui + CSS variables theming
-- [ ] Set up `.claude/` folder with project rules and instructions
-- [ ] Set up GitHub Actions CI (lint, type-check, build)
-- [ ] Verify local dev environment works
-- [ ] Use Playwright MCP tools to verify app loads correctly
-- **PR #1: "chore: initialize monorepo with Next.js + NestJS"**
+#### Step 1.1: Project Skeleton & Connections (~1-2 hrs) ✅
+- [x] Initialize Turborepo monorepo structure
+- [x] Create Next.js app (apps/web)
+- [x] Create NestJS app (apps/api)
+- [x] Set up shared packages (packages/shared-types)
+- [x] Configure Tailwind + shadcn/ui + CSS variables theming
+- [x] Set up `.claude/` folder with project rules and instructions
+- [x] Set up GitHub Actions CI (lint, type-check, build)
+- [x] Verify local dev environment works
+- [x] Use Playwright MCP tools to verify app loads correctly
+- **PR #1: "chore: initialize monorepo with Next.js + NestJS"** ✅
 
-#### Step 1.2: Database & ORM Setup (~1 hr)
-- [ ] Set up Drizzle with PostgreSQL (Railway)
-- [ ] Create initial schema (users table only)
-- [ ] Run first migration
-- [ ] Verify database connection from NestJS
-- **PR #2: "feat: add Drizzle ORM with PostgreSQL connection"**
+#### Step 1.2: Database & ORM Setup (~1 hr) ✅
+- [x] Set up Drizzle with PostgreSQL (Railway)
+- [x] Create initial schema (users table only)
+- [x] Run first migration
+- [x] Verify database connection from NestJS
+- **PR #1: "feat: add Drizzle ORM with PostgreSQL connection"** ✅
 
-#### Step 1.3: Authentication (~2 hrs)
-- [ ] Implement NextAuth with Google + GitHub providers
-- [ ] Set up JWT strategy for API authentication
-- [ ] Create auth guard in NestJS
-- [ ] Add UserContext for session caching
-- [ ] Verify protected routes work end-to-end
-- **PR #3: "feat: add authentication with NextAuth + JWT"**
+#### Step 1.3: Authentication (~2 hrs) ✅
+- [x] Implement NextAuth with Google + GitHub providers
+- [x] Set up session-based strategy for API authentication (using shared DB sessions)
+- [x] Create auth guard in NestJS
+- [x] Add UserContext for session caching
+- [x] Verify protected routes work end-to-end
+- **PR #2: "feat: add NextAuth authentication with Google and GitHub OAuth"** ✅
 
-#### Step 1.4: Storage Connection (~1 hr)
-- [ ] Configure Cloudflare R2 SDK
-- [ ] Create storage service in NestJS
-- [ ] Test presigned URL generation
-- [ ] Verify upload/download works via Postman/curl
-- **PR #4: "feat: add Cloudflare R2 storage integration"**
+#### Step 1.4: Storage Connection (~1 hr) ✅
+- [x] Configure Cloudflare R2 SDK (AWS SDK v3)
+- [x] Create storage service in NestJS
+- [x] Test presigned URL generation
+- [x] Verify upload/download works via Postman/curl
+- **PR #3: "feat: add Cloudflare R2 storage module"** ✅
 
 #### Step 1.5: File Upload Flow (~2 hrs)
 - [ ] Create files table + Drizzle schema
