@@ -22,15 +22,25 @@ jobs:
           fetch-depth: 0
 
       - name: Claude Code Action
-        uses: anthropics/claude-code-action@beta
+        uses: anthropics/claude-code-action@v1
         with:
-          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
-          direct_prompt: |
-            Review this pull request for:
-            1. Code quality and best practices
-            2. Potential bugs or security issues
-            3. Consistency with project patterns
-            4. CSS variables usage (no hardcoded colors)
-            5. shadcn/ui component usage
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          prompt: |
+            Review this pull request for CRITICAL ISSUES ONLY:
 
-            Provide constructive feedback as PR comments.
+            ONLY comment on:
+            1. Bugs (logic errors, null pointer issues, incorrect conditions)
+            2. Security vulnerabilities (SQL injection, XSS, auth bypasses, exposed secrets)
+            3. Glaring performance issues (N+1 queries, memory leaks)
+            4. CSS variables usage (no hardcoded colors like bg-blue-500)
+
+            DO NOT comment on:
+            - Code style, formatting, naming
+            - Minor optimizations or refactoring suggestions
+            - Architecture preferences
+            - Documentation or test coverage
+
+            Keep comments brief and actionable.
+
+            If no critical issues exist, approve the PR with "✓ No critical issues found."
+          claude_args: '--allowed-tools "Bash(gh pr comment:*),Bash(gh pr diff:*),Bash(gh pr view:*),Bash(gh pr review:*)"'
