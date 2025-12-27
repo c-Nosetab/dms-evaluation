@@ -33,10 +33,15 @@ export class StorageService {
   private readonly publicUrl: string;
 
   constructor() {
-    const accountId = process.env.R2_ACCOUNT_ID;
+    // Support both R2_ACCOUNT_ID and CLOUDFLARE_ACCOUNT_ID
+    const accountId =
+      process.env.R2_ACCOUNT_ID || process.env.CLOUDFLARE_ACCOUNT_ID;
     const accessKeyId = process.env.R2_ACCESS_KEY_ID;
     const secretAccessKey = process.env.R2_SECRET_ACCESS_KEY;
     const bucket = process.env.R2_BUCKET_NAME;
+    // Support R2_ENDPOINT for custom endpoint or construct from account ID
+    const endpoint =
+      process.env.R2_ENDPOINT || `https://${accountId}.r2.cloudflarestorage.com`;
 
     if (!accountId || !accessKeyId || !secretAccessKey || !bucket) {
       this.logger.warn(
@@ -51,7 +56,7 @@ export class StorageService {
 
     this.s3Client = new S3Client({
       region: 'auto',
-      endpoint: `https://${accountId}.r2.cloudflarestorage.com`,
+      endpoint,
       credentials: {
         accessKeyId: accessKeyId || '',
         secretAccessKey: secretAccessKey || '',
