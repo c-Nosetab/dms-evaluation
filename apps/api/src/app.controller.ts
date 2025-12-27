@@ -1,6 +1,7 @@
 import { Controller, Get, Inject } from '@nestjs/common';
 import { AppService } from './app.service';
-import { DATABASE_CONNECTION, Database } from './database';
+import { DATABASE_CONNECTION } from './database';
+import type { Database } from './database';
 import { sql } from 'drizzle-orm';
 import { Public, CurrentUser } from './auth';
 import type { AuthUser } from './auth/auth.service';

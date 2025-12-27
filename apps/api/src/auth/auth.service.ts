@@ -2,10 +2,10 @@ import { Injectable, Inject } from '@nestjs/common';
 import { eq, and, gt } from 'drizzle-orm';
 import {
   DATABASE_CONNECTION,
-  Database,
   sessions,
   users,
 } from '../database/database.module';
+import type { Database } from '../database/database.module';
 
 export interface AuthUser {
   id: string;
