@@ -1136,3 +1136,21 @@ NEXT_PUBLIC_API_URL=http://localhost:3001
 - Focus on demo quality over feature quantity
 - 5 minutes is SHORT - practice to stay under
 - They value "ability to think and condense" over exhaustive lists
+
+---
+
+## Branding & UX Discussion (Future)
+
+**Potential Names:**
+- **"Mom's Attic"** - Warm, nostalgic, comforting. Evokes organized chaos, treasures, memories.
+- **"Squirrel Away"** - Playful, action-oriented. Suggests hoarding valuable things for later.
+
+**Exploration Topics:**
+- [ ] Logo concepts (acorns, treasure chest, attic window, cozy vibes)
+- [ ] Color palette exploration (warm but professional)
+- [ ] Mascot design (squirrel character for Squirrel Away?)
+- [ ] Micro-interactions (upload animations, success states)
+- [ ] Tagline brainstorming ("Store it. Find it. Keep it safe.")
+- [ ] UI aesthetic direction (cozy/vintage vs playful/modern)
+
+Both names suggest security + retrieval - perfect for a DMS differentiator vs generic "Drive" names.

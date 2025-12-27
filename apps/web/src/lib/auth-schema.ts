@@ -7,11 +7,7 @@ import {
 } from 'drizzle-orm/pg-core';
 import type { AdapterAccountType } from 'next-auth/adapters';
 
-// ============================================
-// NextAuth Required Tables
 // Note: DrizzleAdapter expects singular table names (user, account, session, verificationToken)
-// ============================================
-
 export const users = pgTable('user', {
   id: text('id')
     .primaryKey()
@@ -65,9 +61,3 @@ export const verificationTokens = pgTable(
     }),
   ]
 );
-
-// Type exports for use in application code
-export type User = typeof users.$inferSelect;
-export type NewUser = typeof users.$inferInsert;
-export type Account = typeof accounts.$inferSelect;
-export type Session = typeof sessions.$inferSelect;
