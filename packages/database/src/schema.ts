@@ -4,6 +4,8 @@ import {
   timestamp,
   primaryKey,
   integer,
+  bigint,
+  index,
 } from 'drizzle-orm/pg-core';
 import type { AdapterAccountType } from 'next-auth/adapters';
 
@@ -66,8 +68,63 @@ export const verificationTokens = pgTable(
   ]
 );
 
+// ============================================
+// DMS Application Tables
+// ============================================
+
+export const folders = pgTable(
+  'folder',
+  {
+    id: text('id')
+      .primaryKey()
+      .$defaultFn(() => crypto.randomUUID()),
+    userId: text('userId')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    parentId: text('parentId').references((): typeof folders => folders.id, {
+      onDelete: 'cascade',
+    }),
+    name: text('name').notNull(),
+    createdAt: timestamp('createdAt', { mode: 'date' }).notNull().defaultNow(),
+    updatedAt: timestamp('updatedAt', { mode: 'date' }).notNull().defaultNow(),
+  },
+  (table) => [
+    index('folder_userId_idx').on(table.userId),
+    index('folder_parentId_idx').on(table.parentId),
+  ]
+);
+
+export const files = pgTable(
+  'file',
+  {
+    id: text('id')
+      .primaryKey()
+      .$defaultFn(() => crypto.randomUUID()),
+    userId: text('userId')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    folderId: text('folderId').references(() => folders.id, {
+      onDelete: 'cascade',
+    }),
+    name: text('name').notNull(),
+    storageKey: text('storageKey').notNull(), // R2 path: /{userId}/{fileId}/{filename}
+    mimeType: text('mimeType').notNull(),
+    sizeBytes: bigint('sizeBytes', { mode: 'number' }).notNull(),
+    createdAt: timestamp('createdAt', { mode: 'date' }).notNull().defaultNow(),
+    updatedAt: timestamp('updatedAt', { mode: 'date' }).notNull().defaultNow(),
+  },
+  (table) => [
+    index('file_userId_idx').on(table.userId),
+    index('file_folderId_idx').on(table.folderId),
+  ]
+);
+
 // Type exports for use in application code
 export type User = typeof users.$inferSelect;
 export type NewUser = typeof users.$inferInsert;
 export type Account = typeof accounts.$inferSelect;
 export type Session = typeof sessions.$inferSelect;
+export type Folder = typeof folders.$inferSelect;
+export type NewFolder = typeof folders.$inferInsert;
+export type File = typeof files.$inferSelect;
+export type NewFile = typeof files.$inferInsert;

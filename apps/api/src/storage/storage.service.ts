@@ -61,24 +61,35 @@ export class StorageService {
         accessKeyId: accessKeyId || '',
         secretAccessKey: secretAccessKey || '',
       },
+      // Disable checksum for R2 compatibility
+      requestChecksumCalculation: 'WHEN_REQUIRED',
+      responseChecksumValidation: 'WHEN_REQUIRED',
     });
   }
 
   /**
    * Generate a presigned URL for uploading a file directly to R2.
    * The client can use this URL to upload without going through our API.
+   * @param customKey - Optional custom key to use instead of auto-generated one
    */
   async getPresignedUploadUrl(
     userId: string,
     filename: string,
     contentType: string,
     expiresInSeconds = 3600, // 1 hour default
+    customKey?: string,
   ): Promise<PresignedUploadResult> {
-    // Create a unique key for the file: userId/timestamp-uuid-filename
-    const timestamp = Date.now();
-    const uuid = crypto.randomUUID();
-    const sanitizedFilename = this.sanitizeFilename(filename);
-    const key = `${userId}/${timestamp}-${uuid}-${sanitizedFilename}`;
+    // Use custom key if provided, otherwise generate one
+    let key: string;
+    if (customKey) {
+      key = customKey;
+    } else {
+      // Create a unique key for the file: userId/timestamp-uuid-filename
+      const timestamp = Date.now();
+      const uuid = crypto.randomUUID();
+      const sanitizedFilename = this.sanitizeFilename(filename);
+      key = `${userId}/${timestamp}-${uuid}-${sanitizedFilename}`;
+    }
 
     const command = new PutObjectCommand({
       Bucket: this.bucket,
@@ -88,6 +99,8 @@ export class StorageService {
 
     const uploadUrl = await getSignedUrl(this.s3Client, command, {
       expiresIn: expiresInSeconds,
+      // Don't sign Content-Type header so client can set it
+      unhoistableHeaders: new Set(['content-type']),
     });
 
     const expiresAt = new Date(Date.now() + expiresInSeconds * 1000);

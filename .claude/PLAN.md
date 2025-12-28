@@ -309,6 +309,13 @@ Role-based access control and advanced features.
   - Optional password protection
   - View-only access for anonymous users
   - Download tracking/analytics
+- [ ] **File Version History** - Track and restore previous file versions
+  - `fileVersions` table: id, fileId, versionNumber, storageKey, sizeBytes, uploadedAt
+  - R2 path structure: `/{userId}/{fileId}/v{n}/{originalFilename}`
+  - Keep last 3 versions per file automatically
+  - Auto-purge versions older than 30 days (background job via BullMQ)
+  - Version restore UI: select previous version → restore as current
+  - Version diff/comparison view (stretch within stretch)
 
 **Phase C Additional Files:**
 ```

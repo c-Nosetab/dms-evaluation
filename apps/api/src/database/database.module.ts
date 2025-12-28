@@ -7,6 +7,8 @@ import {
   timestamp,
   primaryKey,
   integer,
+  bigint,
+  index,
 } from 'drizzle-orm/pg-core';
 
 export const DATABASE_CONNECTION = 'DATABASE_CONNECTION';
@@ -64,7 +66,56 @@ export const verificationTokens = pgTable(
   ],
 );
 
-export const schema = { users, accounts, sessions, verificationTokens };
+// DMS Application Tables
+export const folders = pgTable(
+  'folder',
+  {
+    id: text('id').primaryKey(),
+    userId: text('userId')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    parentId: text('parentId'),
+    name: text('name').notNull(),
+    createdAt: timestamp('createdAt', { mode: 'date' }).notNull().defaultNow(),
+    updatedAt: timestamp('updatedAt', { mode: 'date' }).notNull().defaultNow(),
+  },
+  (table) => [
+    index('folder_userId_idx').on(table.userId),
+    index('folder_parentId_idx').on(table.parentId),
+  ],
+);
+
+export const files = pgTable(
+  'file',
+  {
+    id: text('id').primaryKey(),
+    userId: text('userId')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    folderId: text('folderId').references(() => folders.id, {
+      onDelete: 'cascade',
+    }),
+    name: text('name').notNull(),
+    storageKey: text('storageKey').notNull(),
+    mimeType: text('mimeType').notNull(),
+    sizeBytes: bigint('sizeBytes', { mode: 'number' }).notNull(),
+    createdAt: timestamp('createdAt', { mode: 'date' }).notNull().defaultNow(),
+    updatedAt: timestamp('updatedAt', { mode: 'date' }).notNull().defaultNow(),
+  },
+  (table) => [
+    index('file_userId_idx').on(table.userId),
+    index('file_folderId_idx').on(table.folderId),
+  ],
+);
+
+export const schema = {
+  users,
+  accounts,
+  sessions,
+  verificationTokens,
+  folders,
+  files,
+};
 
 // Export database type for type-safe injection
 export type Database = PostgresJsDatabase<typeof schema>;

@@ -61,7 +61,7 @@ export class StorageController {
    * Get a presigned URL for downloading a file from R2.
    * GET /storage/download-url/:key
    */
-  @Get('download-url/:key(*)')
+  @Get('download-url/*key')
   async getDownloadUrl(
     @Param('key') key: string,
     @Query() query: GetDownloadUrlDto,
@@ -92,7 +92,7 @@ export class StorageController {
    * Get metadata about a file in R2.
    * GET /storage/metadata/:key
    */
-  @Get('metadata/:key(*)')
+  @Get('metadata/*key')
   async getMetadata(@Param('key') key: string) {
     if (!key) {
       throw new BadRequestException('key is required');
@@ -115,7 +115,7 @@ export class StorageController {
    * DELETE /storage/:key
    * Note: In production, you'd verify the user owns this file via the files table.
    */
-  @Delete(':key(*)')
+  @Delete('*key')
   async deleteFile(@CurrentUser() user: AuthUser, @Param('key') key: string) {
     if (!key) {
       throw new BadRequestException('key is required');
