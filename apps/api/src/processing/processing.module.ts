@@ -46,6 +46,6 @@ import { StorageModule } from '../storage';
   ],
   controllers: [ProcessingController],
   providers: [ProcessingService, ProcessingProcessor],
-  exports: [ProcessingService],
+  exports: [ProcessingService, BullModule],
 })
 export class ProcessingModule {}
