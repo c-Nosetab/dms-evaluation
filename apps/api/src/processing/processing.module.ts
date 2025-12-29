@@ -10,6 +10,7 @@ import { StorageModule } from '../storage';
 @Module({
   imports: [
     StorageModule,
+    ConfigModule,
     BullModule.forRootAsync({
       imports: [ConfigModule],
       useFactory: (configService: ConfigService) => {

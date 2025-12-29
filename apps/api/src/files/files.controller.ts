@@ -103,6 +103,43 @@ export class FilesController {
   }
 
   /**
+   * Search files by name and OCR text.
+   * GET /files/search?q=query&limit=50
+   */
+  @Get('search')
+  async searchFiles(
+    @CurrentUser() user: AuthUser,
+    @Query('q') query?: string,
+    @Query('limit') limit?: string,
+  ) {
+    if (!query || query.trim().length === 0) {
+      return { files: [] };
+    }
+
+    const files = await this.filesService.searchFiles(
+      user.id,
+      query.trim(),
+      limit ? parseInt(limit, 10) : 50,
+    );
+
+    return {
+      files: files.map((f) => ({
+        id: f.id,
+        name: f.name,
+        mimeType: f.mimeType,
+        sizeBytes: f.sizeBytes,
+        folderId: f.folderId,
+        isStarred: f.isStarred,
+        ocrText: f.ocrText || null,
+        ocrSummary: f.ocrSummary || null,
+        ocrProcessedAt: f.ocrProcessedAt?.toISOString() || null,
+        createdAt: f.createdAt.toISOString(),
+        updatedAt: f.updatedAt.toISOString(),
+      })),
+    };
+  }
+
+  /**
    * Get recently accessed files.
    * GET /files/recent
    */
@@ -205,6 +242,26 @@ export class FilesController {
       ocrProcessedAt: file.ocrProcessedAt?.toISOString() || null,
       createdAt: file.createdAt.toISOString(),
       updatedAt: file.updatedAt.toISOString(),
+    };
+  }
+
+  /**
+   * Confirm file upload completed and trigger processing.
+   * POST /files/:id/confirm
+   * Call this after R2 upload succeeds to trigger auto-OCR for PDFs/images.
+   */
+  @Post(':id/confirm')
+  async confirmUpload(@CurrentUser() user: AuthUser, @Param('id') id: string) {
+    const result = await this.filesService.confirmUpload(user.id, id);
+
+    return {
+      id: result.file.id,
+      name: result.file.name,
+      mimeType: result.file.mimeType,
+      ocrJobId: result.ocrJobId || null,
+      message: result.ocrJobId
+        ? 'Upload confirmed, OCR processing queued'
+        : 'Upload confirmed',
     };
   }
 

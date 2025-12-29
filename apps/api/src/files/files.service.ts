@@ -4,8 +4,9 @@ import {
   NotFoundException,
   BadRequestException,
   Logger,
+  forwardRef,
 } from '@nestjs/common';
-import { eq, and, isNull, desc, isNotNull } from 'drizzle-orm';
+import { eq, and, isNull, desc, isNotNull, or, ilike } from 'drizzle-orm';
 import {
   DATABASE_CONNECTION,
   files,
@@ -13,6 +14,7 @@ import {
 } from '../database/database.module';
 import type { Database } from '../database/database.module';
 import { StorageService } from '../storage/storage.service';
+import { ProcessingService } from '../processing/processing.service';
 
 export interface CreateFileDto {
   name: string;
@@ -45,6 +47,8 @@ export class FilesService {
   constructor(
     @Inject(DATABASE_CONNECTION) private readonly db: Database,
     private readonly storageService: StorageService,
+    @Inject(forwardRef(() => ProcessingService))
+    private readonly processingService: ProcessingService,
   ) {}
 
   /**
@@ -402,5 +406,93 @@ export class FilesService {
       .where(and(eq(files.id, fileId), eq(files.userId, userId)));
 
     this.logger.debug(`Permanently deleted file: ${fileId}`);
+  }
+
+  // ============================================
+  // Search and Processing Methods
+  // ============================================
+
+  /**
+   * Search files by name and OCR text.
+   * Uses case-insensitive ILIKE for PostgreSQL.
+   */
+  async searchFiles(
+    userId: string,
+    query: string,
+    limit = 50,
+  ): Promise<FileRecord[]> {
+    const searchPattern = `%${query}%`;
+
+    const result = await this.db
+      .select()
+      .from(files)
+      .where(
+        and(
+          eq(files.userId, userId),
+          eq(files.isDeleted, false),
+          or(
+            ilike(files.name, searchPattern),
+            ilike(files.ocrText, searchPattern),
+          ),
+        ),
+      )
+      .orderBy(desc(files.updatedAt))
+      .limit(limit);
+
+    return result;
+  }
+
+  /**
+   * Confirm file upload completed and trigger OCR for PDFs/images.
+   * Called by frontend after R2 upload succeeds.
+   */
+  async confirmUpload(
+    userId: string,
+    fileId: string,
+  ): Promise<{ file: FileRecord; ocrJobId?: string }> {
+    const file = await this.getFile(userId, fileId);
+
+    const isPdf = file.mimeType === 'application/pdf';
+    const isImage = file.mimeType.startsWith('image/');
+
+    let ocrJobId: string | undefined;
+
+    if (!file.ocrProcessedAt) {
+      try {
+        if (isPdf) {
+          // Queue OCR job with both extract + summary for PDFs
+          // This provides searchable text AND AI-generated summary in one pass
+          ocrJobId = await this.processingService.queueOcr(
+            file.id,
+            userId,
+            file.storageKey,
+            file.name,
+            'eng',
+            'both', // Extract text for search + generate summary
+          );
+          this.logger.log(
+            `Auto-queued OCR+summary job ${ocrJobId} for PDF ${fileId}`,
+          );
+        } else if (isImage) {
+          // Queue image description job (summary only - describes visual content)
+          ocrJobId = await this.processingService.queueOcr(
+            file.id,
+            userId,
+            file.storageKey,
+            file.name,
+            'eng',
+            'summary', // Just generate visual description for images
+          );
+          this.logger.log(
+            `Auto-queued image description job ${ocrJobId} for image ${fileId}`,
+          );
+        }
+      } catch (error) {
+        // Log but don't fail - processing is optional enhancement
+        this.logger.warn(`Failed to queue processing for ${fileId}: ${error}`);
+      }
+    }
+
+    return { file, ocrJobId };
   }
 }

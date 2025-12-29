@@ -5,7 +5,7 @@ import React, { createContext, useContext, useState, useCallback, useRef, useEff
 export interface ProcessingJob {
   jobId: string;
   fileName: string;
-  type: 'pdf-split' | 'image-convert' | 'ocr' | 'pdf-thumbnail';
+  type: 'pdf-split' | 'image-convert' | 'ocr' | 'image-describe' | 'pdf-thumbnail';
   status: 'waiting' | 'active' | 'completed' | 'failed';
   progress?: number;
   error?: string;

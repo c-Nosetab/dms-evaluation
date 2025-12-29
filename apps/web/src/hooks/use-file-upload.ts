@@ -19,10 +19,17 @@ interface UploadedFile {
   createdAt: string;
 }
 
+interface OcrJobInfo {
+  jobId: string;
+  fileName: string;
+  mimeType: string;
+}
+
 interface UseFileUploadOptions {
   folderId?: string | null;
   onUploadComplete?: (file: UploadedFile) => void;
   onError?: (error: string, fileName: string) => void;
+  onOcrJobQueued?: (job: OcrJobInfo) => void;
 }
 
 export function useFileUpload(options: UseFileUploadOptions = {}) {
@@ -123,7 +130,39 @@ export function useFileUpload(options: UseFileUploadOptions = {}) {
           xhr.send(file);
         });
 
-        // Step 3: Mark as complete
+        // Step 3: Confirm upload and trigger processing (OCR for PDFs/images)
+        setUploads((prev) =>
+          prev.map((u) =>
+            u.fileId === fileRecord.id
+              ? { ...u, progress: 95 }
+              : u
+          )
+        );
+
+        // Call confirm endpoint to trigger auto-OCR for PDFs/images
+        try {
+          const confirmResponse = await fetch(`${apiUrl}/files/${fileRecord.id}/confirm`, {
+            method: 'POST',
+            credentials: 'include',
+          });
+
+          if (confirmResponse.ok) {
+            const confirmData = await confirmResponse.json();
+            // If OCR job was queued, notify the caller so they can track it
+            if (confirmData.ocrJobId) {
+              options.onOcrJobQueued?.({
+                jobId: confirmData.ocrJobId,
+                fileName: fileRecord.name,
+                mimeType: fileRecord.mimeType,
+              });
+            }
+          }
+        } catch (confirmError) {
+          // Log but don't fail - confirm is for OCR triggering, not critical
+          console.warn('Failed to confirm upload:', confirmError);
+        }
+
+        // Step 4: Mark as complete
         setUploads((prev) =>
           prev.map((u) =>
             u.fileId === fileRecord.id

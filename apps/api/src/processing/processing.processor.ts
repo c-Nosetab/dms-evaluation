@@ -441,10 +441,32 @@ export class ProcessingProcessor extends WorkerHost {
             max_tokens: 4096,
           });
 
-          fullText = response.choices[0]?.message?.content || '';
-          this.logger.log(
-            `[OpenAI] Extracted ${fullText.length} characters from image`,
+          const extractedContent = response.choices[0]?.message?.content || '';
+
+          // Check if OpenAI returned a "no text found" response
+          const noTextPatterns = [
+            /can't extract text/i,
+            /cannot extract text/i,
+            /no text/i,
+            /unable to process/i,
+            /i'm sorry/i,
+            /doesn't contain.*text/i,
+            /does not contain.*text/i,
+          ];
+
+          const isNoTextResponse = noTextPatterns.some((pattern) =>
+            pattern.test(extractedContent),
           );
+
+          if (isNoTextResponse) {
+            this.logger.log('[OpenAI] Image contains no extractable text');
+            fullText = '';
+          } else {
+            fullText = extractedContent;
+            this.logger.log(
+              `[OpenAI] Extracted ${fullText.length} characters from image`,
+            );
+          }
         } catch (error) {
           const errorMsg =
             error instanceof Error ? error.message : String(error);
@@ -482,46 +504,101 @@ export class ProcessingProcessor extends WorkerHost {
 
     // Generate summary if requested (requires OpenAI)
     let summary: string | undefined;
-    if ((mode === 'summary' || mode === 'both') && fullText.length > 0) {
+    const hasExtractableText = fullText.trim().length > 50;
+
+    if (mode === 'summary' || mode === 'both') {
       if (this.openai) {
-        this.logger.log(`Generating summary for ${filename}...`);
+        if (hasExtractableText) {
+          // For documents with text, summarize the text content
+          this.logger.log(`Generating text summary for ${filename}...`);
 
-        try {
-          const summaryResponse = await this.openai.chat.completions.create({
-            model: 'gpt-4o',
-            messages: [
-              {
-                role: 'system',
-                content:
-                  'You are a document summarization assistant. Create concise, well-structured summaries that capture the key points, main ideas, and important details from the provided text.',
-              },
-              {
-                role: 'user',
-                content: `Please summarize the following document:\n\n${fullText}`,
-              },
-            ],
-            max_tokens: 2048,
-          });
+          try {
+            const summaryResponse = await this.openai.chat.completions.create({
+              model: 'gpt-4o',
+              messages: [
+                {
+                  role: 'system',
+                  content:
+                    'You are a document summarization assistant. Create concise, well-structured summaries that capture the key points, main ideas, and important details from the provided text.',
+                },
+                {
+                  role: 'user',
+                  content: `Please summarize the following document:\n\n${fullText}`,
+                },
+              ],
+              max_tokens: 2048,
+            });
 
-          summary = summaryResponse.choices[0]?.message?.content || undefined;
-          this.logger.log(
-            `Generated summary: ${summary?.length || 0} characters`,
-          );
-        } catch (error) {
-          const errorMsg =
-            error instanceof Error ? error.message : String(error);
-          this.logger.error(`Summary generation failed: ${errorMsg}`);
+            summary = summaryResponse.choices[0]?.message?.content || undefined;
+            this.logger.log(
+              `Generated text summary: ${summary?.length || 0} characters`,
+            );
+          } catch (error) {
+            const errorMsg =
+              error instanceof Error ? error.message : String(error);
+            this.logger.error(`Summary generation failed: ${errorMsg}`);
 
-          // If quota exceeded, provide helpful message
-          if (errorMsg.includes('429') || errorMsg.includes('quota')) {
-            summary =
-              '[Summary unavailable - OpenAI quota exceeded. Text extraction completed using Tesseract.js]';
-          } else {
-            summary = '[Error generating summary]';
+            if (errorMsg.includes('429') || errorMsg.includes('quota')) {
+              summary = '[Summary unavailable - OpenAI quota exceeded]';
+            } else {
+              summary = '[Error generating summary]';
+            }
           }
+        } else if (!isPdf) {
+          // For images without text, generate a visual description
+          this.logger.log(`Generating image description for ${filename}...`);
+
+          try {
+            // Detect image type
+            let mimeType = 'image/png';
+            if (fileBuffer[0] === 0xff && fileBuffer[1] === 0xd8) {
+              mimeType = 'image/jpeg';
+            }
+
+            const base64Image = fileBuffer.toString('base64');
+            const descResponse = await this.openai.chat.completions.create({
+              model: 'gpt-4o',
+              messages: [
+                {
+                  role: 'user',
+                  content: [
+                    {
+                      type: 'text',
+                      text: 'Please describe this image in 2-3 sentences. Focus on the main subject, key visual elements, and overall composition. Be concise but informative.',
+                    },
+                    {
+                      type: 'image_url',
+                      image_url: {
+                        url: `data:${mimeType};base64,${base64Image}`,
+                      },
+                    },
+                  ],
+                },
+              ],
+              max_tokens: 500,
+            });
+
+            summary = descResponse.choices[0]?.message?.content || undefined;
+            this.logger.log(
+              `Generated image description: ${summary?.length || 0} characters`,
+            );
+          } catch (error) {
+            const errorMsg =
+              error instanceof Error ? error.message : String(error);
+            this.logger.error(`Image description failed: ${errorMsg}`);
+
+            if (errorMsg.includes('429') || errorMsg.includes('quota')) {
+              summary = '[Description unavailable - OpenAI quota exceeded]';
+            } else {
+              summary = '[Error generating description]';
+            }
+          }
+        } else {
+          // PDF with no extractable text
+          summary = '[No text content found in this document]';
         }
       } else {
-        // No OpenAI available - summarization requires AI
+        // No OpenAI available
         summary = usedFallback
           ? '[Summary unavailable - text extracted using Tesseract.js (local OCR). AI summarization requires OpenAI API.]'
           : '[Summary unavailable - OpenAI API not configured]';
