@@ -7,6 +7,7 @@ import {
   HeadObjectCommand,
 } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
+import { Readable } from 'stream';
 
 export interface PresignedUploadResult {
   uploadUrl: string;
@@ -41,7 +42,8 @@ export class StorageService {
     const bucket = process.env.R2_BUCKET_NAME;
     // Support R2_ENDPOINT for custom endpoint or construct from account ID
     const endpoint =
-      process.env.R2_ENDPOINT || `https://${accountId}.r2.cloudflarestorage.com`;
+      process.env.R2_ENDPOINT ||
+      `https://${accountId}.r2.cloudflarestorage.com`;
 
     if (!accountId || !accessKeyId || !secretAccessKey || !bucket) {
       this.logger.warn(
@@ -61,24 +63,35 @@ export class StorageService {
         accessKeyId: accessKeyId || '',
         secretAccessKey: secretAccessKey || '',
       },
+      // Disable checksum for R2 compatibility
+      requestChecksumCalculation: 'WHEN_REQUIRED',
+      responseChecksumValidation: 'WHEN_REQUIRED',
     });
   }
 
   /**
    * Generate a presigned URL for uploading a file directly to R2.
    * The client can use this URL to upload without going through our API.
+   * @param customKey - Optional custom key to use instead of auto-generated one
    */
   async getPresignedUploadUrl(
     userId: string,
     filename: string,
     contentType: string,
     expiresInSeconds = 3600, // 1 hour default
+    customKey?: string,
   ): Promise<PresignedUploadResult> {
-    // Create a unique key for the file: userId/timestamp-uuid-filename
-    const timestamp = Date.now();
-    const uuid = crypto.randomUUID();
-    const sanitizedFilename = this.sanitizeFilename(filename);
-    const key = `${userId}/${timestamp}-${uuid}-${sanitizedFilename}`;
+    // Use custom key if provided, otherwise generate one
+    let key: string;
+    if (customKey) {
+      key = customKey;
+    } else {
+      // Create a unique key for the file: userId/timestamp-uuid-filename
+      const timestamp = Date.now();
+      const uuid = crypto.randomUUID();
+      const sanitizedFilename = this.sanitizeFilename(filename);
+      key = `${userId}/${timestamp}-${uuid}-${sanitizedFilename}`;
+    }
 
     const command = new PutObjectCommand({
       Bucket: this.bucket,
@@ -88,6 +101,8 @@ export class StorageService {
 
     const uploadUrl = await getSignedUrl(this.s3Client, command, {
       expiresIn: expiresInSeconds,
+      // Don't sign Content-Type header so client can set it
+      unhoistableHeaders: new Set(['content-type']),
     });
 
     const expiresAt = new Date(Date.now() + expiresInSeconds * 1000);
@@ -209,5 +224,65 @@ export class StorageService {
       .replace(/[^a-zA-Z0-9._-]/g, '_') // Replace special chars with underscore
       .replace(/_{2,}/g, '_') // Replace multiple underscores with single
       .substring(0, 255); // Limit length
+  }
+
+  /**
+   * Download a file from R2 as a Buffer.
+   * Used for processing jobs that need to manipulate file contents.
+   */
+  async downloadFile(key: string): Promise<Buffer> {
+    const command = new GetObjectCommand({
+      Bucket: this.bucket,
+      Key: key,
+    });
+
+    const response = await this.s3Client.send(command);
+
+    if (!response.Body) {
+      throw new Error(`No body in response for key: ${key}`);
+    }
+
+    // Convert stream to buffer
+    const stream = response.Body as Readable;
+    const chunks: Buffer[] = [];
+
+    for await (const chunk of stream) {
+      chunks.push(Buffer.from(chunk));
+    }
+
+    const buffer = Buffer.concat(chunks);
+    this.logger.debug(`Downloaded ${buffer.length} bytes from key: ${key}`);
+
+    return buffer;
+  }
+
+  /**
+   * Upload a Buffer directly to R2.
+   * Used for processing jobs that create new files.
+   */
+  async uploadFile(
+    key: string,
+    data: Buffer,
+    contentType: string,
+  ): Promise<void> {
+    const command = new PutObjectCommand({
+      Bucket: this.bucket,
+      Key: key,
+      Body: data,
+      ContentType: contentType,
+    });
+
+    await this.s3Client.send(command);
+    this.logger.debug(`Uploaded ${data.length} bytes to key: ${key}`);
+  }
+
+  /**
+   * Generate a unique storage key for a new file.
+   */
+  generateStorageKey(userId: string, filename: string): string {
+    const timestamp = Date.now();
+    const uuid = crypto.randomUUID();
+    const sanitizedFilename = this.sanitizeFilename(filename);
+    return `${userId}/${timestamp}-${uuid}-${sanitizedFilename}`;
   }
 }

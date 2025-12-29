@@ -6,6 +6,9 @@ import { AppService } from './app.service';
 import { DatabaseModule } from './database';
 import { AuthModule, SessionAuthGuard } from './auth';
 import { StorageModule } from './storage';
+import { FilesModule } from './files';
+import { FoldersModule } from './folders';
+import { ProcessingModule } from './processing';
 
 @Module({
   imports: [
@@ -16,6 +19,9 @@ import { StorageModule } from './storage';
     DatabaseModule,
     AuthModule,
     StorageModule,
+    FilesModule,
+    FoldersModule,
+    ProcessingModule,
   ],
   controllers: [AppController],
   providers: [

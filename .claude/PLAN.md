@@ -1,11 +1,14 @@
 # DMS Evaluation Project Plan
 
 ## Overview
+
 Design and build a Document Management System (DMS) for a CultureEngine/SocialToast.ai Senior Full Stack Engineer interview. The deliverables are:
+
 1. **Pre-interview:** <5 min Loom video with high-level architecture
 2. **Interview:** 15-min presentation with architecture diagram + working demo
 
 ## Timeline
+
 - **Start:** Friday Dec 26, 7:00 PM EST
 - **Deadline:** Monday Dec 29, 9:00 PM EST (6 PM PST)
 - **Available:** ~74 hours
@@ -14,26 +17,28 @@ Design and build a Document Management System (DMS) for a CultureEngine/SocialTo
 
 ## Tech Stack (Final Choices)
 
-| Layer | Technology | Rationale |
-|-------|------------|-----------|
-| Frontend | Next.js 14+ (App Router, RSC, Server Actions) | Their stack, modern patterns |
-| Styling | Tailwind CSS + shadcn/ui | Their stack, rapid UI development |
-| Backend | NestJS | Their stack, TypeScript, scalable |
-| Database | PostgreSQL (Railway) + **Drizzle ORM** | Performance, type-safe, modern choice |
-| Caching | **Redis** (Railway) | Directory caching, sessions, real-time pub/sub |
-| Queue | **BullMQ** (uses Redis) | File processing jobs |
-| File Storage | **Cloudflare R2** | S3-compatible, free tier, no egress fees |
-| Real-time | **WebSockets** (Socket.io or native) | Live file updates, presence |
-| Auth | NextAuth.js (Auth.js v5) - **Google + GitHub OAuth** | Flexibility, quick setup |
-| Monorepo | **Turborepo** | Build optimization, caching |
-| Deployment | Vercel (frontend) + Railway (backend + DB + Redis) | Free tiers, familiar platforms |
+| Layer        | Technology                                           | Rationale                                      |
+| ------------ | ---------------------------------------------------- | ---------------------------------------------- |
+| Frontend     | Next.js 14+ (App Router, RSC, Server Actions)        | Their stack, modern patterns                   |
+| Styling      | Tailwind CSS + shadcn/ui                             | Their stack, rapid UI development              |
+| Backend      | NestJS                                               | Their stack, TypeScript, scalable              |
+| Database     | PostgreSQL (Railway) + **Drizzle ORM**               | Performance, type-safe, modern choice          |
+| Caching      | **Redis** (Railway)                                  | Directory caching, sessions, real-time pub/sub |
+| Queue        | **BullMQ** (uses Redis)                              | File processing jobs                           |
+| File Storage | **Cloudflare R2**                                    | S3-compatible, free tier, no egress fees       |
+| Real-time    | **WebSockets** (Socket.io or native)                 | Live file updates, presence                    |
+| Auth         | NextAuth.js (Auth.js v5) - **Google + GitHub OAuth** | Flexibility, quick setup                       |
+| Monorepo     | **Turborepo**                                        | Build optimization, caching                    |
+| Deployment   | Vercel (frontend) + Railway (backend + DB + Redis)   | Free tiers, familiar platforms                 |
 
 ### Why These Choices (Interview Talking Points)
+
 - **Drizzle over Prisma**: Better performance, smaller bundle, edge-compatible, closer to SQL
 - **R2 over S3**: S3-compatible API (same code), free egress, generous free tier
 - **Turborepo**: Optimizes monorepo builds, integrates with Vercel
 
 ### Performance & Caching Strategy
+
 - **React Context for User Session**: Avoid fetching user info on every navigation
   - `UserContext` provides user data app-wide after initial auth
   - Cached in memory, refreshed on token expiry or manual refresh
@@ -42,106 +47,113 @@ Design and build a Document Management System (DMS) for a CultureEngine/SocialTo
 - **Presigned URLs**: Direct R2 uploads/downloads bypass our API
 
 ### Frontend Theming Strategy (CSS Variables)
+
 All colors, sizes, spacing, and design tokens managed via CSS variables in `globals.css`.
 This enables:
+
 - **Light/Dark mode** with a single class toggle
 - **Consistent design** across all components
 - **Easy adjustments** - change once, reflect everywhere
 
 **CSS Variables Structure:**
+
 ```css
 /* globals.css */
 :root {
-  /* Colors - Light Mode */
-  --color-background: 255 255 255;
-  --color-foreground: 10 10 10;
-  --color-primary: 59 130 246;
-  --color-primary-hover: 37 99 235;
-  --color-secondary: 100 116 139;
-  --color-accent: 139 92 246;
-  --color-destructive: 239 68 68;
-  --color-success: 34 197 94;
-  --color-warning: 234 179 8;
-  --color-muted: 241 245 249;
-  --color-border: 226 232 240;
+	/* Colors - Light Mode */
+	--color-background: 255 255 255;
+	--color-foreground: 10 10 10;
+	--color-primary: 59 130 246;
+	--color-primary-hover: 37 99 235;
+	--color-secondary: 100 116 139;
+	--color-accent: 139 92 246;
+	--color-destructive: 239 68 68;
+	--color-success: 34 197 94;
+	--color-warning: 234 179 8;
+	--color-muted: 241 245 249;
+	--color-border: 226 232 240;
 
-  /* Spacing */
-  --spacing-xs: 0.25rem;
-  --spacing-sm: 0.5rem;
-  --spacing-md: 1rem;
-  --spacing-lg: 1.5rem;
-  --spacing-xl: 2rem;
-  --spacing-2xl: 3rem;
+	/* Spacing */
+	--spacing-xs: 0.25rem;
+	--spacing-sm: 0.5rem;
+	--spacing-md: 1rem;
+	--spacing-lg: 1.5rem;
+	--spacing-xl: 2rem;
+	--spacing-2xl: 3rem;
 
-  /* Border Radius */
-  --radius-sm: 0.25rem;
-  --radius-md: 0.375rem;
-  --radius-lg: 0.5rem;
-  --radius-xl: 0.75rem;
-  --radius-full: 9999px;
+	/* Border Radius */
+	--radius-sm: 0.25rem;
+	--radius-md: 0.375rem;
+	--radius-lg: 0.5rem;
+	--radius-xl: 0.75rem;
+	--radius-full: 9999px;
 
-  /* Shadows */
-  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
-  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1);
-  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1);
+	/* Shadows */
+	--shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+	--shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+	--shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1);
 
-  /* Typography */
-  --font-size-xs: 0.75rem;
-  --font-size-sm: 0.875rem;
-  --font-size-base: 1rem;
-  --font-size-lg: 1.125rem;
-  --font-size-xl: 1.25rem;
-  --font-size-2xl: 1.5rem;
+	/* Typography */
+	--font-size-xs: 0.75rem;
+	--font-size-sm: 0.875rem;
+	--font-size-base: 1rem;
+	--font-size-lg: 1.125rem;
+	--font-size-xl: 1.25rem;
+	--font-size-2xl: 1.5rem;
 
-  /* File Browser Specific */
-  --file-row-height: 3rem;
-  --sidebar-width: 16rem;
-  --header-height: 4rem;
+	/* File Browser Specific */
+	--file-row-height: 3rem;
+	--sidebar-width: 16rem;
+	--header-height: 4rem;
 }
 
 .dark {
-  --color-background: 10 10 10;
-  --color-foreground: 250 250 250;
-  --color-primary: 96 165 250;
-  --color-muted: 30 41 59;
-  --color-border: 51 65 85;
-  /* ... dark mode overrides */
+	--color-background: 10 10 10;
+	--color-foreground: 250 250 250;
+	--color-primary: 96 165 250;
+	--color-muted: 30 41 59;
+	--color-border: 51 65 85;
+	/* ... dark mode overrides */
 }
 ```
 
 **Tailwind Config Integration:**
+
 ```js
 // tailwind.config.js
 module.exports = {
-  theme: {
-    extend: {
-      colors: {
-        background: 'rgb(var(--color-background) / <alpha-value>)',
-        foreground: 'rgb(var(--color-foreground) / <alpha-value>)',
-        primary: 'rgb(var(--color-primary) / <alpha-value>)',
-        // ... maps CSS vars to Tailwind classes
-      },
-      spacing: {
-        'sidebar': 'var(--sidebar-width)',
-        'header': 'var(--header-height)',
-      }
-    }
-  }
-}
+	theme: {
+		extend: {
+			colors: {
+				background: 'rgb(var(--color-background) / <alpha-value>)',
+				foreground: 'rgb(var(--color-foreground) / <alpha-value>)',
+				primary: 'rgb(var(--color-primary) / <alpha-value>)',
+				// ... maps CSS vars to Tailwind classes
+			},
+			spacing: {
+				sidebar: 'var(--sidebar-width)',
+				header: 'var(--header-height)',
+			},
+		},
+	},
+};
 ```
 
 **Usage in Components:**
+
 ```tsx
 // Use Tailwind classes that reference CSS variables
-<div className="bg-background text-foreground p-md rounded-lg shadow-md">
-  <button className="bg-primary hover:bg-primary-hover text-white px-lg py-sm">
-    Upload
-  </button>
+<div className='bg-background text-foreground p-md rounded-lg shadow-md'>
+	<button className='bg-primary hover:bg-primary-hover text-white px-lg py-sm'>
+		Upload
+	</button>
 </div>
 ```
 
 ### Sharing Model (Google Drive-like)
+
 **Core Principles:**
+
 1. **Private by default**: All files/folders are private until explicitly shared
 2. **Folder-level sharing**: Sharing a folder shares all contents at that moment
 3. **Automatic inheritance**: New files added to shared folder are auto-shared
@@ -149,6 +161,7 @@ module.exports = {
 5. **Individual overrides**: Nested items can have explicit shares that persist
 
 **Sharing Hierarchy:**
+
 ```
 /My Drive (private)
 ├── /Project A (shared with Team)
@@ -161,11 +174,13 @@ module.exports = {
 ```
 
 **Behavior:**
+
 - Remove Team from Project A → doc1, Subfolder, doc3 lose access
 - doc2 retains John's explicit access (individual override)
 - Share Subfolder with Sarah → Sarah sees Subfolder + doc3, not doc1/doc2
 
 ### Production Architecture (For Diagrams/Discussion)
+
 - AWS CDK for IaC
 - GitHub Actions for CI/CD
 - CloudWatch/Datadog for observability
@@ -176,16 +191,19 @@ module.exports = {
 ## Progressive Demo Scope
 
 ### Phase A: Basic (MVP) - Target: ~8-10 hours
+
 Core functionality that creates a working demo.
 
 **Features:**
-- [ ] User authentication (Google OAuth via NextAuth)
+
+- [x] User authentication (Google + GitHub OAuth via NextAuth)
 - [ ] File upload to S3/R2
 - [ ] File list view with metadata
 - [ ] File download
 - [ ] Basic folder structure (root level)
 
 **Files to Create:**
+
 ```
 Frontend (Next.js):
 ├── app/
@@ -244,9 +262,11 @@ Backend (NestJS):
 ```
 
 ### Phase B: Medium - Target: ~6-8 hours additional
+
 File processing capabilities.
 
 **Features:**
+
 - [ ] PDF splitting (pdf-lib)
 - [ ] Basic OCR (Tesseract.js or cloud API)
 - [ ] Processing queue (Bull/BullMQ with Redis)
@@ -254,6 +274,7 @@ File processing capabilities.
 - [ ] File preview (PDF, images)
 
 **Additional Files:**
+
 ```
 Backend:
 ├── src/
@@ -275,9 +296,11 @@ Frontend:
 ```
 
 ### Phase C: Full - Target: ~6-8 hours additional
+
 Advanced features for a polished demo.
 
 **Features:**
+
 - [ ] Full-text search (PostgreSQL tsvector or Meilisearch)
 - [ ] File/folder sharing with permissions
 - [ ] Real-time updates (WebSockets or Server-Sent Events) - file added/updated/removed events
@@ -286,9 +309,11 @@ Advanced features for a polished demo.
 - [ ] Redis caching layer (directory listings, file metadata, user sessions)
 
 ### Phase D: Stretch Goals - If Time Permits
+
 Role-based access control and advanced features.
 
 **Features:**
+
 - [ ] Role-based access control (RBAC)
   - **Viewer**: Read-only access to shared files/folders
   - **Editor**: Can upload, edit, delete files in shared folders
@@ -309,8 +334,16 @@ Role-based access control and advanced features.
   - Optional password protection
   - View-only access for anonymous users
   - Download tracking/analytics
+- [ ] **File Version History** - Track and restore previous file versions
+  - `fileVersions` table: id, fileId, versionNumber, storageKey, sizeBytes, uploadedAt
+  - R2 path structure: `/{userId}/{fileId}/v{n}/{originalFilename}`
+  - Keep last 3 versions per file automatically
+  - Auto-purge versions older than 30 days (background job via BullMQ)
+  - Version restore UI: select previous version → restore as current
+  - Version diff/comparison view (stretch within stretch)
 
 **Phase C Additional Files:**
+
 ```
 Backend:
 ├── src/
@@ -337,6 +370,7 @@ Frontend:
 ```
 
 **Phase D (RBAC & Extended) Additional Files:**
+
 ```
 Backend:
 ├── src/
@@ -665,26 +699,31 @@ sequenceDiagram
 ## Presentation Outline (5-min Video)
 
 ### 1. Introduction (30 sec)
+
 - Brief intro: "I designed a cloud-based DMS with..."
 - Show architecture diagram
 
 ### 2. Tech Stack Choices (1 min)
+
 - Why Next.js + NestJS (TypeScript across stack, scalability)
 - Why PostgreSQL (full-text search, relational integrity)
 - Why S3 for storage (cost, CDN-ready, industry standard)
 
 ### 3. Live Demo (2 min)
+
 - Upload a file
 - Show it in the list
 - (If Phase B+) Show PDF split or OCR
 - (If Phase C) Search, share
 
 ### 4. AI Development Workflow (1 min)
+
 - Context setup (docs, rules, permissions)
 - Active code review (don't blindly trust)
 - CI/CD integration (AI code review on PRs)
 
 ### 5. Production Considerations (30 sec)
+
 - How this scales to AWS (CDK, ECS/Lambda)
 - Observability strategy
 - Security considerations
@@ -694,78 +733,90 @@ sequenceDiagram
 ## Development Phases
 
 ### Plugin Usage Strategy
+
 We'll leverage Claude Code plugins throughout development:
+
 - **`/feature-dev`** - For each major feature, guides architecture decisions and implementation
 - **`frontend-design` skill** - For creating polished, production-grade UI components
 
 ### Phase 0: Project Setup (~1-2 hours)
-- [ ] Initialize Next.js project with App Router
-- [ ] Initialize NestJS project
-- [ ] Set up monorepo structure (Turborepo or npm workspaces)
-- [ ] Configure Tailwind + shadcn/ui
-- [ ] Set up PostgreSQL on Railway
-- [ ] Configure environment variables
-- [ ] Set up S3 bucket or R2
+
+- [x] Initialize Next.js project with App Router
+- [x] Initialize NestJS project
+- [x] Set up monorepo structure (Turborepo or npm workspaces)
+- [x] Configure Tailwind + shadcn/ui
+- [x] Set up PostgreSQL on Railway
+- [x] Configure environment variables
+- [x] Set up S3 bucket or R2
 
 ### Phase 1: Build Phase A (MVP) (~8-10 hours)
+
 **Iterative Workflow:** Complete → Review → Validate → Commit → Push → PR → Merge → Repeat
 
-#### Step 1.1: Project Skeleton & Connections (~1-2 hrs)
-- [ ] Initialize Turborepo monorepo structure
-- [ ] Create Next.js app (apps/web)
-- [ ] Create NestJS app (apps/api)
-- [ ] Set up shared packages (packages/shared-types)
-- [ ] Configure Tailwind + shadcn/ui + CSS variables theming
-- [ ] Set up `.claude/` folder with project rules and instructions
-- [ ] Set up GitHub Actions CI (lint, type-check, build)
-- [ ] Verify local dev environment works
-- [ ] Use Playwright MCP tools to verify app loads correctly
-- **PR #1: "chore: initialize monorepo with Next.js + NestJS"**
+#### Step 1.1: Project Skeleton & Connections (~1-2 hrs) ✅
 
-#### Step 1.2: Database & ORM Setup (~1 hr)
-- [ ] Set up Drizzle with PostgreSQL (Railway)
-- [ ] Create initial schema (users table only)
-- [ ] Run first migration
-- [ ] Verify database connection from NestJS
-- **PR #2: "feat: add Drizzle ORM with PostgreSQL connection"**
+- [x] Initialize Turborepo monorepo structure
+- [x] Create Next.js app (apps/web)
+- [x] Create NestJS app (apps/api)
+- [x] Set up shared packages (packages/shared-types)
+- [x] Configure Tailwind + shadcn/ui + CSS variables theming
+- [x] Set up `.claude/` folder with project rules and instructions
+- [x] Set up GitHub Actions CI (lint, type-check, build)
+- [x] Verify local dev environment works
+- [x] Use Playwright MCP tools to verify app loads correctly
+- **PR #1: "chore: initialize monorepo with Next.js + NestJS"** ✅
 
-#### Step 1.3: Authentication (~2 hrs)
-- [ ] Implement NextAuth with Google + GitHub providers
-- [ ] Set up JWT strategy for API authentication
-- [ ] Create auth guard in NestJS
-- [ ] Add UserContext for session caching
-- [ ] Verify protected routes work end-to-end
-- **PR #3: "feat: add authentication with NextAuth + JWT"**
+#### Step 1.2: Database & ORM Setup (~1 hr) ✅
 
-#### Step 1.4: Storage Connection (~1 hr)
-- [ ] Configure Cloudflare R2 SDK
-- [ ] Create storage service in NestJS
-- [ ] Test presigned URL generation
-- [ ] Verify upload/download works via Postman/curl
-- **PR #4: "feat: add Cloudflare R2 storage integration"**
+- [x] Set up Drizzle with PostgreSQL (Railway)
+- [x] Create initial schema (users table only)
+- [x] Run first migration
+- [x] Verify database connection from NestJS
+- **PR #1: "feat: add Drizzle ORM with PostgreSQL connection"** ✅
+
+#### Step 1.3: Authentication (~2 hrs) ✅
+
+- [x] Implement NextAuth with Google + GitHub providers
+- [x] Set up session-based strategy for API authentication (using shared DB sessions)
+- [x] Create auth guard in NestJS
+- [x] Add UserContext for session caching
+- [x] Verify protected routes work end-to-end
+- **PR #2: "feat: add NextAuth authentication with Google and GitHub OAuth"** ✅
+
+#### Step 1.4: Storage Connection (~1 hr) ✅
+
+- [x] Configure Cloudflare R2 SDK (AWS SDK v3)
+- [x] Create storage service in NestJS
+- [x] Test presigned URL generation
+- [x] Verify upload/download works via Postman/curl
+- **PR #3: "feat: add Cloudflare R2 storage module"** ✅
 
 #### Step 1.5: File Upload Flow (~2 hrs)
-- [ ] Create files table + Drizzle schema
-- [ ] Implement upload API endpoint
-- [ ] Build upload UI component (`frontend-design` skill)
-- [ ] End-to-end test: upload file → see in R2
+
+- [x] Create files table + Drizzle schema
+- [x] Implement upload API endpoint
+- [x] Build upload UI component (`frontend-design` skill)
+- [x] End-to-end test: upload file → see in R2
 - **PR #5: "feat: implement file upload with presigned URLs"**
 
 #### Step 1.6: File List & Download (~1.5 hrs)
-- [ ] Implement file list API endpoint
-- [ ] Build file browser UI (`frontend-design` skill)
-- [ ] Implement secure download with presigned URLs
-- [ ] Add loading states, error handling
+
+- [x] Implement file list API endpoint
+- [x] Build file browser UI (`frontend-design` skill)
+- [x] Implement secure download with presigned URLs
+- [x] Add loading states, error handling
 - **PR #6: "feat: add file listing and download"**
 
 #### Step 1.7: Folder Structure (~1.5 hrs)
-- [ ] Create folders table + schema
-- [ ] Implement folder CRUD endpoints
-- [ ] Build folder navigation UI
-- [ ] Test nested folder creation
+
+- [x] Create folders table + schema
+- [x] Implement folder CRUD endpoints
+- [x] Build folder navigation UI
+- [x] Test nested folder creation
 - **PR #7: "feat: add folder support"**
 
 #### Step 1.8: Deploy & Validate (~1 hr)
+
 - [ ] Deploy frontend to Vercel
 - [ ] Deploy backend to Railway
 - [ ] Configure environment variables
@@ -773,12 +824,15 @@ We'll leverage Claude Code plugins throughout development:
 - **PR #8: "chore: production deployment configuration"**
 
 ### Phase 2: Build Phase B (Processing) (~6-8 hours)
-- [ ] **Queue System** (`/feature-dev`): Set up Redis + BullMQ on Railway
-- [ ] **PDF Processing** (`/feature-dev`): PDF splitting with pdf-lib
-- [ ] **OCR Integration** (`/feature-dev`): Tesseract.js or cloud OCR
-- [ ] **Status UI** (`frontend-design` skill): Processing status indicators
+
+- [-] **Queue System** (`/feature-dev`): Set up Redis + BullMQ on Railway
+- [-] **PDF Processing** (`/feature-dev`): PDF splitting with pdf-lib
+- [-] **OCR Integration** (`/feature-dev`): Tesseract.js or cloud OCR
+- [-] **Image Processing** (`/feature/dev`): Image conversion to webp
+- [-] **Status UI** (`frontend-design` skill): Processing status indicators
 
 ### Phase 3: Build Phase C (Advanced) (~6-8 hours)
+
 - [ ] **Search Feature** (`/feature-dev`): Full-text search with PostgreSQL tsvector
 - [ ] **Sharing System** (`/feature-dev`): File/folder sharing with permissions
 - [ ] **Real-time Updates** (`/feature-dev`): WebSocket integration for live file events
@@ -786,6 +840,7 @@ We'll leverage Claude Code plugins throughout development:
 - [ ] **Activity Feed** (`frontend-design` skill): Audit log UI
 
 ### Phase 4: Build Phase D - Stretch Goals (~6-8 hours if time permits)
+
 - [ ] **RBAC System** (`/feature-dev`): Viewer/Editor/Admin roles
 - [ ] **Teams** (`/feature-dev`): Team creation, member management
 - [ ] **Permission UI** (`frontend-design` skill): Role selector, permission manager
@@ -796,6 +851,7 @@ We'll leverage Claude Code plugins throughout development:
 - [ ] **Public Links** (`/feature-dev`): Shareable URLs with expiry, password, analytics
 
 ### Phase 5: Presentation Prep (~3-4 hours)
+
 - [ ] Export architecture diagrams (Mermaid → PNG)
 - [ ] Record 5-min Loom video
 - [ ] Prepare 15-min presentation notes
@@ -806,6 +862,7 @@ We'll leverage Claude Code plugins throughout development:
 ## AI Workflow Documentation
 
 Throughout development, we'll document:
+
 1. How context was set up (this plan, docs folder)
 2. Key decisions made with AI assistance
 3. Code review examples
@@ -819,7 +876,9 @@ This becomes material for the presentation's AI workflow section.
 ## Plugin Workflow Details
 
 ### `/feature-dev` Plugin
+
 For each major backend/full-stack feature:
+
 1. Invoke with feature description
 2. It analyzes codebase patterns and architecture
 3. Provides implementation blueprint
@@ -828,7 +887,9 @@ For each major backend/full-stack feature:
 **Use for:** Auth, File Upload, Processing Queue, Search, Sharing, Real-time
 
 ### `frontend-design` Skill
+
 For polished UI components:
+
 1. Invoke when building user-facing interfaces
 2. Creates distinctive, production-grade designs
 3. Avoids generic "AI look" - aims for professional quality
@@ -836,6 +897,7 @@ For polished UI components:
 **Use for:** File Browser, Upload UI, Folder Navigation, Status Indicators, Activity Feed
 
 ### Workflow Example
+
 ```
 1. Start feature: /feature-dev "Implement file upload with S3 presigned URLs"
 2. Follow architecture guidance for backend
@@ -849,8 +911,10 @@ For polished UI components:
 ## Testing Strategy
 
 ### Playwright MCP Tools (Local Development)
+
 Claude has access to Playwright MCP tools for browser automation during development.
 This allows Claude to:
+
 - Navigate to the running app and take screenshots
 - Click elements, fill forms, interact with the UI
 - Validate UI behavior after code changes
@@ -858,12 +922,14 @@ This allows Claude to:
 
 **Usage During Development:**
 After implementing a feature, Claude can use Playwright tools to:
+
 1. `mcp__playwright__playwright_navigate` - Open the app in browser
 2. `mcp__playwright__playwright_screenshot` - Capture current state
 3. `mcp__playwright__playwright_click` / `playwright_fill` - Test interactions
 4. `mcp__playwright__playwright_get_visible_text` - Verify content
 
 **Key Test Scenarios (Manual via Playwright):**
+
 1. User can sign in with Google/GitHub
 2. User can upload a file and see it in the list
 3. User can create folders and navigate
@@ -876,35 +942,35 @@ After implementing a feature, Claude can use Playwright tools to:
 ## Claude Code Configuration
 
 ### Project-Specific Rules (`.claude/settings.json`)
+
 ```json
 {
-  "permissions": {
-    "allow": [
-      "Bash(npm:*)",
-      "Bash(npx:*)",
-      "Bash(pnpm:*)",
-      "Bash(turbo:*)",
-      "Bash(git:*)",
-      "Bash(gh:*)",
-      "Read",
-      "Write",
-      "Edit",
-      "Glob",
-      "Grep"
-    ],
-    "deny": [
-      "Bash(rm -rf /)",
-      "Bash(*--force*)"
-    ]
-  }
+	"permissions": {
+		"allow": [
+			"Bash(npm:*)",
+			"Bash(npx:*)",
+			"Bash(pnpm:*)",
+			"Bash(turbo:*)",
+			"Bash(git:*)",
+			"Bash(gh:*)",
+			"Read",
+			"Write",
+			"Edit",
+			"Glob",
+			"Grep"
+		],
+		"deny": ["Bash(rm -rf /)", "Bash(*--force*)"]
+	}
 }
 ```
 
 ### Project Instructions (`.claude/instructions.md`)
+
 ```markdown
 # DMS Evaluation Project
 
 ## Tech Stack
+
 - Frontend: Next.js 14+ (App Router), Tailwind CSS, shadcn/ui
 - Backend: NestJS, Drizzle ORM
 - Database: PostgreSQL
@@ -912,6 +978,7 @@ After implementing a feature, Claude can use Playwright tools to:
 - Auth: NextAuth.js
 
 ## Code Style Rules
+
 1. Use CSS variables for all colors, spacing, sizing (see globals.css)
 2. All components should support light/dark mode via CSS variables
 3. Use Drizzle ORM for all database queries
@@ -919,16 +986,19 @@ After implementing a feature, Claude can use Playwright tools to:
 5. Follow the iterative PR workflow: Complete → Review → Commit → Push → PR
 
 ## File Structure
+
 - `apps/web` - Next.js frontend
 - `apps/api` - NestJS backend
 - `packages/shared-types` - Shared TypeScript types
 - `packages/database` - Drizzle schema and migrations
 
 ## Testing
+
 - Use Playwright for E2E tests
 - Run tests before each PR
 
 ## Security
+
 - Never commit secrets or API keys
 - Validate all file uploads (type, size)
 - Use parameterized queries (Drizzle handles this)
@@ -940,6 +1010,7 @@ After implementing a feature, Claude can use Playwright tools to:
 ## CI/CD Pipeline (GitHub Actions)
 
 ### Claude Code Review Action
+
 Automated AI code review on every PR - aligns with your AI workflow and demonstrates CI/CD integration.
 
 ```yaml
@@ -950,9 +1021,9 @@ on:
   pull_request:
     types: [opened, synchronize]
     paths:
-      - "apps/**/*.ts"
-      - "apps/**/*.tsx"
-      - "packages/**/*.ts"
+      - 'apps/**/*.ts'
+      - 'apps/**/*.tsx'
+      - 'packages/**/*.ts'
 
 jobs:
   claude-review:
@@ -1063,11 +1134,11 @@ jobs:
 
 ## Key Files Reference
 
-| File | Purpose |
-|------|---------|
-| docs/req.md | Original requirements |
-| docs/video_transcript.txt | CTO video transcript |
-| docs/my_ai_flow.txt | Your AI workflow description |
+| File                      | Purpose                      |
+| ------------------------- | ---------------------------- |
+| docs/req.md               | Original requirements        |
+| docs/video_transcript.txt | CTO video transcript         |
+| docs/my_ai_flow.txt       | Your AI workflow description |
 
 ---
 
@@ -1084,6 +1155,7 @@ jobs:
 ## Pre-Development Setup Checklist
 
 ### Accounts & Services (Do Now)
+
 - [ ] **Cloudflare Account** - Sign up at cloudflare.com
   - Create R2 bucket (free tier: 10GB storage, 1M requests/month)
   - Get API credentials (Account ID, Access Key ID, Secret Access Key)
@@ -1095,6 +1167,7 @@ jobs:
 - [ ] **GitHub OAuth App** - Settings → Developer Settings → OAuth Apps
 
 ### Cloudflare R2 Setup Steps
+
 1. Log into Cloudflare Dashboard
 2. Go to R2 (in sidebar)
 3. Create bucket: `dms-files` (or similar)
@@ -1103,6 +1176,7 @@ jobs:
 6. Save: Account ID, Access Key ID, Secret Access Key
 
 ### Environment Variables You'll Need
+
 ```bash
 # Cloudflare R2
 CLOUDFLARE_ACCOUNT_ID=
@@ -1142,10 +1216,12 @@ NEXT_PUBLIC_API_URL=http://localhost:3001
 ## Branding & UX Discussion (Future)
 
 **Potential Names:**
+
 - **"Mom's Attic"** - Warm, nostalgic, comforting. Evokes organized chaos, treasures, memories.
 - **"Squirrel Away"** - Playful, action-oriented. Suggests hoarding valuable things for later.
 
 **Exploration Topics:**
+
 - [ ] Logo concepts (acorns, treasure chest, attic window, cozy vibes)
 - [ ] Color palette exploration (warm but professional)
 - [ ] Mascot design (squirrel character for Squirrel Away?)

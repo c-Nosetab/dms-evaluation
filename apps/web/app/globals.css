@@ -2,47 +2,68 @@
 
 /* ============================================
    CSS Variables Theming System
-   All colors, spacing, and sizing managed here
+   Squirrel Away Brand Colors
+   Extracted from: squirrel logo, acorn, logo text
    ============================================ */
 
 @theme inline {
-  /* Color palette - Primary */
-  --color-primary-50: oklch(0.97 0.02 250);
-  --color-primary-100: oklch(0.93 0.04 250);
-  --color-primary-200: oklch(0.86 0.08 250);
-  --color-primary-300: oklch(0.76 0.12 250);
-  --color-primary-400: oklch(0.64 0.16 250);
-  --color-primary-500: oklch(0.55 0.18 250);
-  --color-primary-600: oklch(0.47 0.17 250);
-  --color-primary-700: oklch(0.40 0.14 250);
-  --color-primary-800: oklch(0.34 0.11 250);
-  --color-primary-900: oklch(0.28 0.08 250);
-  --color-primary-950: oklch(0.20 0.05 250);
+  /* Color palette - Primary (Warm Brown from Squirrel/Logo) */
+  --color-primary-50: #fdf8f3;
+  --color-primary-100: #f5ebe0;
+  --color-primary-200: #ead6c1;
+  --color-primary-300: #d4b896;
+  --color-primary-400: #b8936b;
+  --color-primary-500: #8b5a2b;
+  --color-primary-600: #704a24;
+  --color-primary-700: #5d3d1e;
+  --color-primary-800: #4a3118;
+  --color-primary-900: #3d2613;
+  --color-primary-950: #2a1a0d;
 
-  /* Color palette - Neutral/Gray */
-  --color-neutral-50: oklch(0.98 0 0);
-  --color-neutral-100: oklch(0.96 0 0);
-  --color-neutral-200: oklch(0.90 0 0);
-  --color-neutral-300: oklch(0.83 0 0);
-  --color-neutral-400: oklch(0.71 0 0);
-  --color-neutral-500: oklch(0.55 0 0);
-  --color-neutral-600: oklch(0.44 0 0);
-  --color-neutral-700: oklch(0.37 0 0);
-  --color-neutral-800: oklch(0.27 0 0);
-  --color-neutral-900: oklch(0.21 0 0);
-  --color-neutral-950: oklch(0.13 0 0);
+  /* Color palette - Accent (Amber/Orange from Acorn) */
+  --color-accent-50: #fffbeb;
+  --color-accent-100: #fef3c7;
+  --color-accent-200: #fde68a;
+  --color-accent-300: #fcd34d;
+  --color-accent-400: #fbbf24;
+  --color-accent-500: #d97706;
+  --color-accent-600: #b45309;
+  --color-accent-700: #92400e;
+  --color-accent-800: #78350f;
+  --color-accent-900: #451a03;
 
-  /* Color palette - Success */
-  --color-success-500: oklch(0.72 0.19 142);
-  --color-success-600: oklch(0.60 0.17 142);
+  /* Color palette - Cream (From Squirrel Belly/Acorn Body) */
+  --color-cream-50: #fefdfb;
+  --color-cream-100: #fdfaf5;
+  --color-cream-200: #f9f3e8;
+  --color-cream-300: #f3e8d4;
+  --color-cream-400: #e8d5b8;
+  --color-cream-500: #d4b896;
 
-  /* Color palette - Warning */
-  --color-warning-500: oklch(0.80 0.18 84);
-  --color-warning-600: oklch(0.70 0.17 84);
+  /* Color palette - Neutral (Warm-tinted grays) */
+  --color-neutral-50: #fafaf9;
+  --color-neutral-100: #f5f5f4;
+  --color-neutral-200: #e7e5e4;
+  --color-neutral-300: #d6d3d1;
+  --color-neutral-400: #a8a29e;
+  --color-neutral-500: #78716c;
+  --color-neutral-600: #57534e;
+  --color-neutral-700: #44403c;
+  --color-neutral-800: #292524;
+  --color-neutral-900: #1c1917;
+  --color-neutral-950: #0c0a09;
+
+  /* Color palette - Success (Forest green) */
+  --color-success-500: #16a34a;
+  --color-success-600: #15803d;
+
+  /* Color palette - Warning (Amber) */
+  --color-warning-500: #eab308;
+  --color-warning-600: #ca8a04;
 
   /* Color palette - Destructive/Error */
-  --color-destructive-500: oklch(0.63 0.24 27);
-  --color-destructive-600: oklch(0.55 0.22 27);
+  --color-destructive-500: #dc2626;
+  --color-destructive-600: #b91c1c;
 
   /* Spacing scale */
   --spacing-0: 0px;
@@ -61,10 +82,10 @@
 
   /* Border radius */
   --radius-sm: 0.25rem;
-  --radius-md: 0.375rem;
-  --radius-lg: 0.5rem;
-  --radius-xl: 0.75rem;
-  --radius-2xl: 1rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;
+  --radius-xl: 1rem;
+  --radius-2xl: 1.5rem;
   --radius-full: 9999px;
 
   /* Font sizes */
@@ -77,101 +98,102 @@
   --font-size-3xl: 1.875rem;
   --font-size-4xl: 2.25rem;
 
-  /* Shadows */
-  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
-  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+  /* Shadows - Warm tinted */
+  --shadow-sm: 0 1px 2px 0 rgb(139 90 43 / 0.05);
+  --shadow-md: 0 4px 6px -1px rgb(139 90 43 / 0.08), 0 2px 4px -2px rgb(139 90 43 / 0.06);
+  --shadow-lg: 0 10px 15px -3px rgb(139 90 43 / 0.1), 0 4px 6px -4px rgb(139 90 43 / 0.08);
+  --shadow-xl: 0 20px 25px -5px rgb(139 90 43 / 0.1), 0 8px 10px -6px rgb(139 90 43 / 0.08);
 }
 
 /* ============================================
-   Light Theme (default)
+   Light Theme (default) - Warm & Cozy
    ============================================ */
 :root {
   /* Semantic colors */
-  --background: var(--color-neutral-50);
-  --foreground: var(--color-neutral-950);
+  --background: var(--color-cream-50);
+  --foreground: var(--color-neutral-900);
 
-  --card: var(--color-neutral-50);
-  --card-foreground: var(--color-neutral-950);
+  --card: #ffffff;
+  --card-foreground: var(--color-neutral-900);
 
-  --popover: var(--color-neutral-50);
-  --popover-foreground: var(--color-neutral-950);
+  --popover: #ffffff;
+  --popover-foreground: var(--color-neutral-900);
 
-  --primary: var(--color-primary-600);
-  --primary-foreground: var(--color-neutral-50);
+  --primary: var(--color-primary-500);
+  --primary-foreground: #ffffff;
 
-  --secondary: var(--color-neutral-100);
-  --secondary-foreground: var(--color-neutral-900);
+  --secondary: var(--color-cream-200);
+  --secondary-foreground: var(--color-primary-800);
 
-  --muted: var(--color-neutral-100);
+  --muted: var(--color-cream-100);
   --muted-foreground: var(--color-neutral-500);
 
-  --accent: var(--color-neutral-100);
-  --accent-foreground: var(--color-neutral-900);
+  --accent: var(--color-accent-500);
+  --accent-foreground: #ffffff;
 
   --destructive: var(--color-destructive-500);
-  --destructive-foreground: var(--color-neutral-50);
+  --destructive-foreground: #ffffff;
 
   --success: var(--color-success-500);
-  --success-foreground: var(--color-neutral-50);
+  --success-foreground: #ffffff;
 
   --warning: var(--color-warning-500);
-  --warning-foreground: var(--color-neutral-950);
+  --warning-foreground: var(--color-neutral-900);
 
-  --border: var(--color-neutral-200);
-  --input: var(--color-neutral-200);
+  --border: var(--color-cream-300);
+  --input: var(--color-cream-200);
   --ring: var(--color-primary-500);
 
   /* Component-specific */
-  --sidebar-background: var(--color-neutral-50);
-  --sidebar-foreground: var(--color-neutral-900);
-  --sidebar-border: var(--color-neutral-200);
-  --sidebar-accent: var(--color-neutral-100);
-  --sidebar-accent-foreground: var(--color-neutral-900);
+  --sidebar-background: #ffffff;
+  --sidebar-foreground: var(--color-neutral-800);
+  --sidebar-border: var(--color-cream-300);
+  --sidebar-accent: var(--color-cream-100);
+  --sidebar-accent-foreground: var(--color-primary-700);
 
   /* File browser specific */
   --file-icon: var(--color-neutral-400);
-  --folder-icon: var(--color-primary-500);
-  --file-selected: var(--color-primary-100);
-  --file-hover: var(--color-neutral-100);
+  --folder-icon: var(--color-accent-500);
+  --file-selected: var(--color-cream-200);
+  --file-hover: var(--color-cream-100);
 
   /* Radius */
-  --radius: var(--radius-md);
+  --radius: var(--radius-lg);
 }
 
 /* ============================================
-   Dark Theme
+   Dark Theme - Rich & Warm
    ============================================ */
 .dark {
   --background: var(--color-neutral-950);
-  --foreground: var(--color-neutral-50);
+  --foreground: var(--color-cream-100);
 
   --card: var(--color-neutral-900);
-  --card-foreground: var(--color-neutral-50);
+  --card-foreground: var(--color-cream-100);
 
   --popover: var(--color-neutral-900);
-  --popover-foreground: var(--color-neutral-50);
+  --popover-foreground: var(--color-cream-100);
 
-  --primary: var(--color-primary-500);
+  --primary: var(--color-primary-400);
   --primary-foreground: var(--color-neutral-950);
 
   --secondary: var(--color-neutral-800);
-  --secondary-foreground: var(--color-neutral-50);
+  --secondary-foreground: var(--color-cream-200);
 
   --muted: var(--color-neutral-800);
   --muted-foreground: var(--color-neutral-400);
 
-  --accent: var(--color-neutral-800);
-  --accent-foreground: var(--color-neutral-50);
+  --accent: var(--color-accent-400);
+  --accent-foreground: var(--color-neutral-950);
 
   --destructive: var(--color-destructive-600);
-  --destructive-foreground: var(--color-neutral-50);
+  --destructive-foreground: #ffffff;
 
   --success: var(--color-success-600);
-  --success-foreground: var(--color-neutral-50);
+  --success-foreground: #ffffff;
 
   --warning: var(--color-warning-600);
-  --warning-foreground: var(--color-neutral-950);
+  --warning-foreground: var(--color-neutral-900);
 
   --border: var(--color-neutral-800);
   --input: var(--color-neutral-800);
@@ -179,16 +201,134 @@
 
   /* Component-specific */
   --sidebar-background: var(--color-neutral-950);
-  --sidebar-foreground: var(--color-neutral-100);
+  --sidebar-foreground: var(--color-cream-200);
   --sidebar-border: var(--color-neutral-800);
   --sidebar-accent: var(--color-neutral-800);
-  --sidebar-accent-foreground: var(--color-neutral-100);
+  --sidebar-accent-foreground: var(--color-cream-100);
 
   /* File browser specific */
   --file-icon: var(--color-neutral-500);
-  --folder-icon: var(--color-primary-400);
+  --folder-icon: var(--color-accent-400);
   --file-selected: var(--color-primary-900);
   --file-hover: var(--color-neutral-800);
+}
+
+/* ============================================
+   Animations & Keyframes
+   ============================================ */
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fade-down {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes scale-in {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes slide-in-left {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes slide-in-right {
+  from {
+    opacity: 0;
+    transform: translateX(100%);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
+}
+
+@keyframes pulse-soft {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
+/* Animation utility classes */
+.animate-fade-in {
+  animation: fade-in 0.5s ease-out forwards;
+}
+
+.animate-fade-up {
+  animation: fade-up 0.5s ease-out forwards;
+}
+
+.animate-fade-down {
+  animation: fade-down 0.5s ease-out forwards;
+}
+
+.animate-scale-in {
+  animation: scale-in 0.3s ease-out forwards;
+}
+
+.animate-slide-in-left {
+  animation: slide-in-left 0.4s ease-out forwards;
+}
+
+.animate-slide-in-right {
+  animation: slide-in-right 0.3s ease-out forwards;
+}
+
+.animate-float {
+  animation: float 3s ease-in-out infinite;
+}
+
+.animate-pulse-soft {
+  animation: pulse-soft 2s ease-in-out infinite;
+}
+
+/* Staggered animation delays */
+.delay-100 { animation-delay: 100ms; }
+.delay-200 { animation-delay: 200ms; }
+.delay-300 { animation-delay: 300ms; }
+.delay-400 { animation-delay: 400ms; }
+.delay-500 { animation-delay: 500ms; }
+
+/* Initially hidden for animation */
+.animate-on-load {
+  opacity: 0;
 }
 
 /* ============================================
@@ -210,8 +350,56 @@ body {
   outline-offset: 2px;
 }
 
-/* Selection */
+/* Selection - Brand colored */
 ::selection {
-  background-color: var(--primary);
-  color: var(--primary-foreground);
+  background-color: var(--color-primary-200);
+  color: var(--color-primary-900);
+}
+
+/* Smooth scrolling */
+html {
+  scroll-behavior: smooth;
+}
+
+/* ============================================
+   Enhanced Interactive States
+   ============================================ */
+
+/* Card hover enhancement */
+.card-hover {
+  transition: all 0.2s ease-out;
+}
+
+.card-hover:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg);
+}
+
+/* Button press effect */
+.btn-press:active {
+  transform: scale(0.98);
+}
+
+/* Gradient backgrounds */
+.bg-gradient-warm {
+  background: linear-gradient(135deg, var(--color-primary-500) 0%, var(--color-accent-600) 100%);
+}
+
+.bg-gradient-cream {
+  background: linear-gradient(180deg, var(--color-cream-50) 0%, var(--color-cream-100) 100%);
+}
+
+/* Subtle texture overlay */
+.texture-grain {
+  position: relative;
+}
+
+.texture-grain::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%' height='100%' filter='url(%23noise)'/%3E%3C/svg%3E");
+  opacity: 0.03;
+  pointer-events: none;
+  mix-blend-mode: overlay;
 }
