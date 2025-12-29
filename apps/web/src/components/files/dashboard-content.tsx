@@ -78,7 +78,7 @@ export function DashboardContent({ userName }: DashboardContentProps) {
 	const [folders, setFolders] = useState<FolderItem[]>([]);
 
 	// Processing context for shared job state
-	const { jobs: processingJobs, removeJob } = useProcessing();
+	const { jobs: processingJobs, removeJob, addJob } = useProcessing();
 	const [viewMode, setViewMode] = useState<ViewMode>('list');
 	const [selectedFiles, setSelectedFiles] = useState<Set<string>>(new Set());
 	const [infoFile, setInfoFile] = useState<FileItem | null>(null);
@@ -186,13 +186,79 @@ export function DashboardContent({ userName }: DashboardContentProps) {
 		}
 	}, [searchParams, loadData, loadBreadcrumb]);
 
+	// Handle preview query param (from search results)
+	useEffect(() => {
+		const previewId = searchParams?.get('preview');
+		if (!previewId) return;
+
+		// Try to find the file in current files list
+		const fileToPreview = files.find((f) => f.id === previewId);
+		if (fileToPreview) {
+			setPreviewFile(fileToPreview);
+			// Clear the preview param from URL to avoid re-opening on refresh
+			const url = new URL(window.location.href);
+			url.searchParams.delete('preview');
+			window.history.replaceState({}, '', url.toString());
+		} else if (files.length > 0) {
+			// File not in current folder - fetch it directly
+			const fetchAndPreview = async () => {
+				try {
+					const response = await fetch(`${apiUrl}/files/${previewId}`, {
+						credentials: 'include',
+					});
+					if (response.ok) {
+						const file = await response.json();
+						setPreviewFile(file);
+						// Clear the preview param from URL
+						const url = new URL(window.location.href);
+						url.searchParams.delete('preview');
+						window.history.replaceState({}, '', url.toString());
+					}
+				} catch (error) {
+					console.error('Failed to fetch file for preview:', error);
+				}
+			};
+			fetchAndPreview();
+		}
+	}, [searchParams, files, apiUrl]);
+
+	// Watch for completed processing jobs and refresh file data
+	useEffect(() => {
+		const completedJobs = processingJobs.filter(
+			(j) => j.status === 'completed' && (j.type === 'ocr' || j.type === 'image-describe')
+		);
+
+		if (completedJobs.length > 0) {
+			// Delay refresh to allow backend to fully save the results
+			const timeout = setTimeout(() => {
+				loadData(currentFolderId);
+			}, 1500);
+			return () => clearTimeout(timeout);
+		}
+	}, [processingJobs, loadData, currentFolderId]);
+
 	const handleUploadComplete = useCallback((file: FileItem) => {
 		setFiles((prev) => [file, ...prev]);
 	}, []);
 
+	const handleOcrJobQueued = useCallback(
+		(job: { jobId: string; fileName: string; mimeType: string }) => {
+			// Determine job type based on mime type
+			const isImage = job.mimeType.startsWith('image/');
+			addJob({
+				jobId: job.jobId,
+				fileName: job.fileName,
+				type: isImage ? 'image-describe' : 'ocr',
+				status: 'waiting',
+			});
+		},
+		[addJob]
+	);
+
 	const { uploads, uploadFiles, removeUpload } = useFileUpload({
 		folderId: currentFolderId,
 		onUploadComplete: handleUploadComplete,
+		onOcrJobQueued: handleOcrJobQueued,
 		onError: (error, fileName) => {
 			console.error(`Upload failed for ${fileName}: ${error}`);
 		},
@@ -935,8 +1001,8 @@ export function DashboardContent({ userName }: DashboardContentProps) {
 						My Files
 					</h1>
 					<p className='text-(--muted-foreground)'>
-						Welcome back, {userName?.split(' ')[0] || 'friend'}! Stashy&apos;s
-						got your files.
+						🐿️ &nbsp;Welcome back, {userName?.split(' ')[0] || 'friend'}!
+						Stashy&apos;s got your files.
 					</p>
 				</div>
 
@@ -1449,11 +1515,13 @@ export function DashboardContent({ userName }: DashboardContentProps) {
 								))}
 
 								{/* Files */}
-								{files.map((file) => (
+								{files.map((file) => {
+									const isActive = infoFile?.id === file.id || previewFile?.id === file.id;
+									return (
 									<ContextMenu key={file.id}>
 										<ContextMenuTrigger asChild>
 											<Card
-												className='group relative overflow-hidden cursor-pointer card-hover'
+												className={`group relative overflow-hidden cursor-pointer card-hover ${isActive ? 'ring-2 ring-(--primary) bg-(--primary)/5' : ''}`}
 												onClick={() => handleFileClick(file)}
 											>
 												<CardContent className='p-0'>
@@ -1542,7 +1610,8 @@ export function DashboardContent({ userName }: DashboardContentProps) {
 											)}
 										</ContextMenuContent>
 									</ContextMenu>
-								))}
+								);
+								})}
 							</div>
 						)}
 
@@ -1706,11 +1775,13 @@ export function DashboardContent({ userName }: DashboardContentProps) {
 										))}
 
 										{/* Files */}
-										{files.map((file) => (
+										{files.map((file) => {
+											const isActive = infoFile?.id === file.id || previewFile?.id === file.id;
+											return (
 											<ContextMenu key={file.id}>
 												<ContextMenuTrigger asChild>
 													<TableRow
-														className='group cursor-pointer'
+														className={`group cursor-pointer ${isActive ? 'bg-(--primary)/10 border-l-2 border-l-(--primary)' : ''}`}
 														data-state={
 															selectedFiles.has(file.id)
 																? 'selected'
@@ -1896,7 +1967,8 @@ export function DashboardContent({ userName }: DashboardContentProps) {
 													)}
 												</ContextMenuContent>
 											</ContextMenu>
-										))}
+										);
+										})}
 									</TableBody>
 								</Table>
 							</Card>

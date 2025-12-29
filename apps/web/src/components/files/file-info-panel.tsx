@@ -170,7 +170,6 @@ export function FileInfoPanel({ file, onClose, onDownload, onRemove, onRename, o
   const isImage = currentFile.mimeType.startsWith('image/');
   const canSplit = isPdf;
   const canConvert = isImage;
-  const canOcr = isImage || isPdf; // Both images and PDFs support OCR
 
   // Processing API calls
   const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
@@ -260,6 +259,35 @@ export function FileInfoPanel({ file, onClose, onDownload, onRemove, onRename, o
       });
     } catch (error) {
       console.error('OCR failed:', error);
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  const handleDescribeImage = async () => {
+    if (!currentFile) return;
+    setIsProcessing(true);
+    setOcrResult(null);
+    setOcrSummary(null);
+    try {
+      const response = await fetch(`${apiUrl}/processing/files/${currentFile.id}/ocr`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ mode: 'summary' }),
+      });
+
+      if (!response.ok) throw new Error('Failed to start image description');
+
+      const data = await response.json();
+      addJob({
+        jobId: data.jobId,
+        fileName: currentFile.name,
+        type: 'image-describe',
+        status: 'waiting',
+      });
+    } catch (error) {
+      console.error('Image description failed:', error);
     } finally {
       setIsProcessing(false);
     }
@@ -404,7 +432,7 @@ export function FileInfoPanel({ file, onClose, onDownload, onRemove, onRename, o
           </Card>
 
           {/* Processing Actions */}
-          {(canSplit || canConvert || canOcr) && (
+          {(canSplit || canConvert || isPdf || isImage) && (
             <Card>
               <CardHeader className="pb-3">
                 <CardTitle className="text-sm font-medium flex items-center gap-2">
@@ -429,6 +457,7 @@ export function FileInfoPanel({ file, onClose, onDownload, onRemove, onRename, o
                           {job.type === 'pdf-split' && 'Splitting PDF...'}
                           {job.type === 'image-convert' && 'Converting image...'}
                           {job.type === 'ocr' && 'Extracting text...'}
+                          {job.type === 'image-describe' && 'Analyzing image...'}
                           {job.progress !== undefined && ` (${job.progress}%)`}
                         </span>
                       </div>
@@ -470,8 +499,8 @@ export function FileInfoPanel({ file, onClose, onDownload, onRemove, onRename, o
                   </Button>
                 )}
 
-                {/* OCR Button */}
-                {canOcr && (
+                {/* OCR Button - PDFs only */}
+                {isPdf && (
                   <Button
                     variant="outline"
                     className="w-full justify-start"
@@ -485,7 +514,23 @@ export function FileInfoPanel({ file, onClose, onDownload, onRemove, onRename, o
                   </Button>
                 )}
 
-                {!canSplit && !canConvert && !canOcr && (
+                {/* Describe Image Button - Images only */}
+                {isImage && (
+                  <Button
+                    variant="outline"
+                    className="w-full justify-start"
+                    onClick={() => handleDescribeImage()}
+                    disabled={isProcessing || getActiveJobs().length > 0}
+                  >
+                    <svg className="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                    </svg>
+                    Describe Image (AI)
+                  </Button>
+                )}
+
+                {!canSplit && !canConvert && !isPdf && !isImage && (
                   <p className="text-sm text-(--muted-foreground)">
                     No processing options available for this file type.
                   </p>
@@ -521,7 +566,7 @@ export function FileInfoPanel({ file, onClose, onDownload, onRemove, onRename, o
                       <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
                       </svg>
-                      Summary Available
+                      {isImage ? 'Description Available' : 'Summary Available'}
                     </span>
                   )}
                 </div>
@@ -676,26 +721,41 @@ export function FileInfoPanel({ file, onClose, onDownload, onRemove, onRename, o
         <AlertDialogContent className="max-w-2xl max-h-[80vh] overflow-hidden flex flex-col">
           <AlertDialogHeader>
             <AlertDialogTitle>
-              {ocrResult && ocrSummary ? 'Extracted Text & Summary' : ocrSummary ? 'Document Summary' : 'Extracted Text'}
+              {isImage
+                ? 'Image Description'
+                : ocrResult && ocrSummary
+                  ? 'Extracted Text & Summary'
+                  : ocrSummary
+                    ? 'Document Summary'
+                    : 'Extracted Text'}
             </AlertDialogTitle>
             <AlertDialogDescription>
-              {ocrResult && ocrSummary
-                ? `AI-processed content from ${currentFile.name}`
-                : ocrSummary
-                  ? `AI-generated summary of ${currentFile.name}`
-                  : `Text extracted from ${currentFile.name}`}
+              {isImage
+                ? `AI-generated description of ${currentFile.name}`
+                : ocrResult && ocrSummary
+                  ? `AI-processed content from ${currentFile.name}`
+                  : ocrSummary
+                    ? `AI-generated summary of ${currentFile.name}`
+                    : `Text extracted from ${currentFile.name}`}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <div className="flex-1 overflow-auto py-4 space-y-4">
-            {/* Summary Section */}
+            {/* Summary/Description Section */}
             {ocrSummary && (
               <div>
                 <div className="flex items-center justify-between mb-2">
                   <h4 className="text-sm font-medium text-(--foreground) flex items-center gap-2">
                     <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                      {isImage ? (
+                        <>
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                        </>
+                      ) : (
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                      )}
                     </svg>
-                    AI Summary
+                    {isImage ? 'Image Description' : 'AI Summary'}
                   </h4>
                   <Button
                     variant="ghost"

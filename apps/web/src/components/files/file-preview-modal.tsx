@@ -2,7 +2,13 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import Image from 'next/image';
+import { Document, Page, pdfjs } from 'react-pdf';
+import 'react-pdf/dist/Page/AnnotationLayer.css';
+import 'react-pdf/dist/Page/TextLayer.css';
 import { Button } from '@/components/ui/button';
+
+// Configure PDF.js worker
+pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
 
 interface FileItem {
   id: string;
@@ -29,6 +35,11 @@ export function FilePreviewModal({ file, onClose, onDownload }: FilePreviewModal
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // PDF state
+  const [numPages, setNumPages] = useState<number>(0);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pdfScale, setPdfScale] = useState(1.0);
+
   const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
   // Handle opening
@@ -36,6 +47,8 @@ export function FilePreviewModal({ file, onClose, onDownload }: FilePreviewModal
     if (file && !currentFile) {
       setCurrentFile(file);
       setError(null);
+      setCurrentPage(1);
+      setNumPages(0);
       requestAnimationFrame(() => {
         requestAnimationFrame(() => {
           setIsVisible(true);
@@ -45,6 +58,8 @@ export function FilePreviewModal({ file, onClose, onDownload }: FilePreviewModal
       setCurrentFile(file);
       setPreviewUrl(null);
       setError(null);
+      setCurrentPage(1);
+      setNumPages(0);
     } else if (!file && currentFile && !isClosing) {
       handleClose();
     }
@@ -87,6 +102,8 @@ export function FilePreviewModal({ file, onClose, onDownload }: FilePreviewModal
       setCurrentFile(null);
       setPreviewUrl(null);
       setIsClosing(false);
+      setCurrentPage(1);
+      setNumPages(0);
       onClose();
     }, 300);
   }, [isClosing, onClose]);
@@ -104,6 +121,17 @@ export function FilePreviewModal({ file, onClose, onDownload }: FilePreviewModal
       return () => document.removeEventListener('keydown', handleKeyDown);
     }
   }, [currentFile, handleClose]);
+
+  // PDF document load handler
+  const onDocumentLoadSuccess = ({ numPages: pages }: { numPages: number }) => {
+    setNumPages(pages);
+    setIsLoading(false);
+  };
+
+  const onDocumentLoadError = () => {
+    setError('Failed to load PDF');
+    setIsLoading(false);
+  };
 
   if (!currentFile) return null;
 
@@ -133,8 +161,66 @@ export function FilePreviewModal({ file, onClose, onDownload }: FilePreviewModal
             <h2 className="text-lg font-semibold text-(--foreground) truncate">
               {currentFile.name}
             </h2>
+            {isPdf && numPages > 0 && (
+              <span className="text-sm text-(--muted-foreground) shrink-0">
+                Page {currentPage} of {numPages}
+              </span>
+            )}
           </div>
           <div className="flex items-center gap-2 shrink-0">
+            {/* PDF navigation controls */}
+            {isPdf && numPages > 1 && (
+              <div className="flex items-center gap-1 mr-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                  disabled={currentPage <= 1}
+                >
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                  </svg>
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage(p => Math.min(numPages, p + 1))}
+                  disabled={currentPage >= numPages}
+                >
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  </svg>
+                </Button>
+              </div>
+            )}
+            {/* PDF zoom controls */}
+            {isPdf && numPages > 0 && (
+              <div className="flex items-center gap-1 mr-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setPdfScale(s => Math.max(0.5, s - 0.25))}
+                  disabled={pdfScale <= 0.5}
+                >
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" />
+                  </svg>
+                </Button>
+                <span className="text-sm text-(--muted-foreground) w-12 text-center">
+                  {Math.round(pdfScale * 100)}%
+                </span>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setPdfScale(s => Math.min(2.5, s + 0.25))}
+                  disabled={pdfScale >= 2.5}
+                >
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                  </svg>
+                </Button>
+              </div>
+            )}
             <Button
               variant="outline"
               size="sm"
@@ -188,12 +274,29 @@ export function FilePreviewModal({ file, onClose, onDownload }: FilePreviewModal
             />
           )}
 
-          {!isLoading && !error && previewUrl && isPdf && (
-            <iframe
-              src={previewUrl}
-              className="w-full h-full rounded-lg shadow-lg bg-white"
-              title={currentFile.name}
-            />
+          {!error && previewUrl && isPdf && (
+            <div className="flex justify-center">
+              <Document
+                file={previewUrl}
+                onLoadSuccess={onDocumentLoadSuccess}
+                onLoadError={onDocumentLoadError}
+                loading={
+                  <div className="flex flex-col items-center gap-4">
+                    <div className="w-8 h-8 border-2 border-(--primary) border-t-transparent rounded-full animate-spin" />
+                    <p className="text-sm text-(--muted-foreground)">Loading PDF...</p>
+                  </div>
+                }
+                className="shadow-lg rounded-lg overflow-hidden"
+              >
+                <Page
+                  pageNumber={currentPage}
+                  scale={pdfScale}
+                  renderTextLayer={true}
+                  renderAnnotationLayer={true}
+                  className="bg-white"
+                />
+              </Document>
+            </div>
           )}
 
           {!isLoading && !error && !isPreviewable && (
