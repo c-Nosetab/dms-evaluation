@@ -23,6 +23,7 @@ const Page = dynamic(
 // Import styles
 import 'react-pdf/dist/Page/AnnotationLayer.css';
 import 'react-pdf/dist/Page/TextLayer.css';
+import { getApiUrl } from '@/lib/api';
 
 interface FileItem {
   id: string;
@@ -54,7 +55,7 @@ export function FilePreviewModal({ file, onClose, onDownload }: FilePreviewModal
   const [currentPage, setCurrentPage] = useState(1);
   const [pdfScale, setPdfScale] = useState(1.0);
 
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+  const apiUrl = getApiUrl();
 
   // Handle opening
   useEffect(() => {

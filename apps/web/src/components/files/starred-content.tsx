@@ -30,6 +30,7 @@ import { FileInfoPanel } from './file-info-panel';
 import { FolderInfoPanel } from './folder-info-panel';
 import { FilePreviewModal } from './file-preview-modal';
 import { RenameDialog } from './rename-dialog';
+import { getApiUrl } from '@/lib/api';
 
 interface FolderItem {
   id: string;
@@ -66,7 +67,7 @@ export function StarredContent() {
   const [isLoading, setIsLoading] = useState(true);
 
   const router = useRouter();
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+  const apiUrl = getApiUrl();
 
   // Load starred files and folders from API
   const loadData = useCallback(async () => {

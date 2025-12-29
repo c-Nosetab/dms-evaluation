@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useCallback } from 'react';
+import { getApiUrl } from '@/lib/api';
 
 interface FileUploadProgress {
   fileId: string;
@@ -39,7 +40,7 @@ export function useFileUpload(options: UseFileUploadOptions = {}) {
   const uploadFile = useCallback(
     async (file: File) => {
       const tempId = crypto.randomUUID();
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+      const apiUrl = getApiUrl();
       let createdFileId: string | null = null; // Track the real file ID for cleanup
 
       // Add to upload queue

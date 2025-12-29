@@ -16,6 +16,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { useProcessing } from '@/contexts/processing-context';
+import { getApiUrl } from '@/lib/api';
 
 interface FileItem {
   id: string;
@@ -172,7 +173,7 @@ export function FileInfoPanel({ file, onClose, onDownload, onRemove, onRename, o
   const canConvert = isImage;
 
   // Processing API calls
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+  const apiUrl = getApiUrl();
 
   const handleSplitPdf = async () => {
     if (!currentFile) return;

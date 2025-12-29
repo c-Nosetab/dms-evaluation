@@ -36,6 +36,7 @@ import { RenameDialog } from './rename-dialog';
 import { CreateFolderDialog } from './create-folder-dialog';
 import { useFileUpload } from '@/hooks/use-file-upload';
 import { useProcessing } from '@/contexts/processing-context';
+import { getApiUrl } from '@/lib/api';
 
 interface BreadcrumbItem {
 	id: string | null;
@@ -120,7 +121,7 @@ export function DashboardContent({ userName }: DashboardContentProps) {
 		}
 	}, [files, infoFile]);
 
-	const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+	const apiUrl = getApiUrl();
 	const searchParams = useSearchParams();
 
 	// Load files and folders from API based on current folder

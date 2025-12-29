@@ -35,6 +35,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import { getApiUrl } from '@/lib/api';
 
 interface FolderItem {
   id: string;
@@ -67,7 +68,7 @@ export function TrashContent() {
   const [isLoading, setIsLoading] = useState(true);
   const [deleteTarget, setDeleteTarget] = useState<DeleteTarget>(null);
 
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+  const apiUrl = getApiUrl();
 
   // Load trashed files and folders from API
   const loadData = useCallback(async () => {

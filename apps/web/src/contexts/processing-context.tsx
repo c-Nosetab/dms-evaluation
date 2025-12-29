@@ -1,6 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useState, useCallback, useRef, useEffect } from 'react';
+import { getApiUrl } from '@/lib/api';
 
 export interface ProcessingJob {
   jobId: string;
@@ -71,7 +72,7 @@ export function ProcessingProvider({ children }: { children: React.ReactNode }) 
 
         try {
           const response = await fetch(
-            `${process.env.NEXT_PUBLIC_API_URL}/processing/jobs/${job.jobId}`,
+            `${getApiUrl()}/processing/jobs/${job.jobId}`,
             { credentials: 'include' }
           );
 

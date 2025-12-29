@@ -28,6 +28,7 @@ import {
 import { FileInfoPanel } from './file-info-panel';
 import { FilePreviewModal } from './file-preview-modal';
 import { RenameDialog } from './rename-dialog';
+import { getApiUrl } from '@/lib/api';
 
 interface FileItem {
   id: string;
@@ -52,7 +53,7 @@ export function RecentContent() {
   const [renameFile, setRenameFile] = useState<FileItem | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+  const apiUrl = getApiUrl();
 
   // Load recent files from API
   const loadData = useCallback(async () => {

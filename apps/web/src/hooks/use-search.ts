@@ -2,6 +2,7 @@
 
 import { useState, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
+import { getApiUrl } from '@/lib/api';
 
 interface SearchResult {
   id: string;
@@ -28,7 +29,7 @@ export function useSearch(options: UseSearchOptions = {}) {
   const debounceRef = useRef<NodeJS.Timeout | null>(null);
   const router = useRouter();
 
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+  const apiUrl = getApiUrl();
 
   const search = useCallback(
     async (searchQuery: string) => {
