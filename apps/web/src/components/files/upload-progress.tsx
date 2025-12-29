@@ -78,9 +78,6 @@ const getJobIcon = (type: ProcessingJob['type']) => {
 };
 
 export function UploadProgress({ uploads, processingJobs = [], onRemove, onRemoveJob }: UploadProgressProps) {
-  const activeUploads = uploads.filter((u) => u.status !== 'complete' || Date.now() - 3000 < 0);
-  const activeJobs = processingJobs.filter((j) => j.status !== 'completed' || Date.now() - 3000 < 0);
-
   // Show panel if there are active uploads or processing jobs
   if (uploads.length === 0 && processingJobs.length === 0) return null;
 

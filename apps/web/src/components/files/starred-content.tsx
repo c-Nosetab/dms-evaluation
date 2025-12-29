@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useEffect, useRef } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { Card, CardContent } from '@/components/ui/card';
@@ -52,13 +52,9 @@ interface FileItem {
   thumbnailUrl?: string;
 }
 
-interface StarredContentProps {
-  userName?: string | null;
-}
-
 type ViewMode = 'grid' | 'list';
 
-export function StarredContent({ userName }: StarredContentProps) {
+export function StarredContent() {
   const [files, setFiles] = useState<FileItem[]>([]);
   const [folders, setFolders] = useState<FolderItem[]>([]);
   const [viewMode, setViewMode] = useState<ViewMode>('grid');
@@ -660,10 +656,13 @@ export function StarredContent({ userName }: StarredContentProps) {
                             <div className="flex flex-col">
                               <div className="w-full aspect-square bg-(--muted)/30 flex items-center justify-center overflow-hidden">
                                 {file.mimeType.startsWith('image/') && file.thumbnailUrl ? (
-                                  <img
+                                  <Image
                                     src={file.thumbnailUrl}
                                     alt={file.name}
+                                    width={200}
+                                    height={200}
                                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                                    unoptimized
                                   />
                                 ) : (
                                   <div className="w-16 h-16 flex items-center justify-center">
@@ -719,10 +718,13 @@ export function StarredContent({ userName }: StarredContentProps) {
                                 <div className="flex items-center gap-3">
                                   <div className="w-10 h-10 rounded-lg bg-(--muted)/30 flex items-center justify-center overflow-hidden shrink-0">
                                     {file.mimeType.startsWith('image/') && file.thumbnailUrl ? (
-                                      <img
+                                      <Image
                                         src={file.thumbnailUrl}
                                         alt={file.name}
+                                        width={40}
+                                        height={40}
                                         className="w-full h-full object-cover"
+                                        unoptimized
                                       />
                                     ) : (
                                       <div className="w-6 h-6 flex items-center justify-center">

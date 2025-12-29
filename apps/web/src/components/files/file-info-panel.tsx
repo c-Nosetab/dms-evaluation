@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
+import Image from 'next/image';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -14,7 +15,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { useProcessing, type ProcessingJob } from '@/contexts/processing-context';
+import { useProcessing } from '@/contexts/processing-context';
 
 interface FileItem {
   id: string;
@@ -91,6 +92,7 @@ export function FileInfoPanel({ file, onClose, onDownload, onRemove, onRename, o
       // File set to null externally (e.g., file deleted)
       handleClose();
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [file, currentFile, isClosing]);
 
   const handleClose = useCallback(() => {
@@ -305,10 +307,13 @@ export function FileInfoPanel({ file, onClose, onDownload, onRemove, onRename, o
           {/* Preview */}
           <div className="aspect-video bg-(--muted)/30 rounded-lg flex items-center justify-center overflow-hidden">
             {currentFile.mimeType.startsWith('image/') && currentFile.thumbnailUrl ? (
-              <img
+              <Image
                 src={currentFile.thumbnailUrl}
                 alt={currentFile.name}
+                width={400}
+                height={300}
                 className="w-full h-full object-contain"
+                unoptimized
               />
             ) : (
               <div className="text-center p-4">

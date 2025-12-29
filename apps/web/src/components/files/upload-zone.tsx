@@ -64,7 +64,8 @@ export function UploadZone({
   );
 
   // Expose a method to programmatically trigger the file input
-  const triggerFileInput = useCallback(() => {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const _triggerFileInput = useCallback(() => {
     if (!disabled) {
       inputRef.current?.click();
     }

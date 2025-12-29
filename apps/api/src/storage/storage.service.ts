@@ -42,7 +42,8 @@ export class StorageService {
     const bucket = process.env.R2_BUCKET_NAME;
     // Support R2_ENDPOINT for custom endpoint or construct from account ID
     const endpoint =
-      process.env.R2_ENDPOINT || `https://${accountId}.r2.cloudflarestorage.com`;
+      process.env.R2_ENDPOINT ||
+      `https://${accountId}.r2.cloudflarestorage.com`;
 
     if (!accountId || !accessKeyId || !secretAccessKey || !bucket) {
       this.logger.warn(

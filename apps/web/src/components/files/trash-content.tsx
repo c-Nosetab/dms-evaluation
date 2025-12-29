@@ -57,14 +57,10 @@ interface FileItem {
   thumbnailUrl?: string;
 }
 
-interface TrashContentProps {
-  userName?: string | null;
-}
-
 type ViewMode = 'grid' | 'list';
 type DeleteTarget = { type: 'file' | 'folder'; id: string; name: string } | null;
 
-export function TrashContent({ userName }: TrashContentProps) {
+export function TrashContent() {
   const [files, setFiles] = useState<FileItem[]>([]);
   const [folders, setFolders] = useState<FolderItem[]>([]);
   const [viewMode, setViewMode] = useState<ViewMode>('list');

@@ -146,10 +146,7 @@ export class ProcessingController {
     const file = await this.getFile(fileId, user.id);
 
     // Validate it's a PDF or image
-    if (
-      !file.mimeType.includes('pdf') &&
-      !file.mimeType.startsWith('image/')
-    ) {
+    if (!file.mimeType.includes('pdf') && !file.mimeType.startsWith('image/')) {
       throw new HttpException(
         'OCR is only supported for PDF and image files',
         HttpStatus.BAD_REQUEST,
@@ -165,7 +162,12 @@ export class ProcessingController {
       dto.mode,
     );
 
-    const modeLabel = dto.mode === 'summary' ? 'summarization' : dto.mode === 'both' ? 'OCR + summarization' : 'OCR';
+    const modeLabel =
+      dto.mode === 'summary'
+        ? 'summarization'
+        : dto.mode === 'both'
+          ? 'OCR + summarization'
+          : 'OCR';
     return {
       jobId,
       message: `${modeLabel} job queued`,
@@ -204,6 +206,7 @@ export class ProcessingController {
 
   /**
    * Get the status of a processing job.
+   * Only returns jobs owned by the current user.
    */
   @Get('jobs/:jobId')
   async getJobStatus(
@@ -216,7 +219,15 @@ export class ProcessingController {
       throw new HttpException('Job not found', HttpStatus.NOT_FOUND);
     }
 
-    return status;
+    // Verify ownership - prevent IDOR vulnerability
+    if (status.userId !== user.id) {
+      throw new HttpException('Job not found', HttpStatus.NOT_FOUND);
+    }
+
+    // Don't expose userId in response - extract it and return rest
+    const { userId, ...safeStatus } = status;
+    void userId; // Mark as intentionally unused for security
+    return safeStatus;
   }
 
   /**
@@ -236,17 +247,30 @@ export class ProcessingController {
 
   /**
    * Cancel a pending job.
+   * Only allows canceling jobs owned by the current user.
    */
   @Delete('jobs/:jobId')
   async cancelJob(
     @Param('jobId') jobId: string,
     @CurrentUser() user: { id: string },
   ) {
-    const cancelled = await this.processingService.cancelJob(jobId);
+    // First verify ownership before attempting cancellation
+    const jobUserId = await this.processingService.getJobUserId(jobId);
 
-    if (!cancelled) {
+    if (!jobUserId) {
+      throw new HttpException('Job not found', HttpStatus.NOT_FOUND);
+    }
+
+    // Verify ownership - prevent IDOR vulnerability
+    if (jobUserId !== user.id) {
+      throw new HttpException('Job not found', HttpStatus.NOT_FOUND);
+    }
+
+    const result = await this.processingService.cancelJob(jobId);
+
+    if (!result.cancelled) {
       throw new HttpException(
-        'Job not found or already started',
+        'Job already started or completed',
         HttpStatus.BAD_REQUEST,
       );
     }

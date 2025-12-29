@@ -5,7 +5,7 @@ import {
   BadRequestException,
   Logger,
 } from '@nestjs/common';
-import { eq, and, isNull, desc, isNotNull, not } from 'drizzle-orm';
+import { eq, and, isNull, desc, isNotNull } from 'drizzle-orm';
 import {
   DATABASE_CONNECTION,
   files,
@@ -108,10 +108,7 @@ export class FilesService {
     userId: string,
     folderId: string | null = null,
   ): Promise<FileRecord[]> {
-    const conditions = [
-      eq(files.userId, userId),
-      eq(files.isDeleted, false),
-    ];
+    const conditions = [eq(files.userId, userId), eq(files.isDeleted, false)];
 
     if (folderId) {
       conditions.push(eq(files.folderId, folderId));

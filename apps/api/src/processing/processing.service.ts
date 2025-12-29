@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectQueue } from '@nestjs/bullmq';
-import { Queue, Job } from 'bullmq';
+import { Queue } from 'bullmq';
 import {
   PROCESSING_QUEUE,
   ProcessingJobData,
@@ -146,8 +146,12 @@ export class ProcessingService {
 
   /**
    * Get the status of a processing job.
+   * Returns null if job not found.
+   * Returns status with userId for ownership verification in controller.
    */
-  async getJobStatus(jobId: string): Promise<ProcessingStatus | null> {
+  async getJobStatus(
+    jobId: string,
+  ): Promise<(ProcessingStatus & { userId: string }) | null> {
     const job = await this.processingQueue.getJob(jobId);
     if (!job) {
       return null;
@@ -165,6 +169,7 @@ export class ProcessingService {
       error: job.failedReason,
       createdAt: new Date(job.timestamp),
       finishedAt: job.finishedOn ? new Date(job.finishedOn) : undefined,
+      userId: data.userId, // Include for ownership verification
     };
   }
 
@@ -211,20 +216,37 @@ export class ProcessingService {
 
   /**
    * Cancel a job if it hasn't started yet.
+   * Returns { cancelled: true, userId } on success, or { cancelled: false } on failure.
    */
-  async cancelJob(jobId: string): Promise<boolean> {
+  async cancelJob(
+    jobId: string,
+  ): Promise<{ cancelled: boolean; userId?: string }> {
     const job = await this.processingQueue.getJob(jobId);
     if (!job) {
-      return false;
+      return { cancelled: false };
     }
 
+    const data = job.data as ProcessingJobData;
     const state = await job.getState();
+
     if (state === 'waiting' || state === 'delayed') {
       await job.remove();
       this.logger.log(`Cancelled job ${jobId}`);
-      return true;
+      return { cancelled: true, userId: data.userId };
     }
 
-    return false;
+    return { cancelled: false, userId: data.userId };
+  }
+
+  /**
+   * Get the userId for a job (for ownership verification).
+   */
+  async getJobUserId(jobId: string): Promise<string | null> {
+    const job = await this.processingQueue.getJob(jobId);
+    if (!job) {
+      return null;
+    }
+    const data = job.data as ProcessingJobData;
+    return data.userId;
   }
 }

@@ -10,7 +10,9 @@ import { createCanvas } from 'canvas';
 import Tesseract from 'tesseract.js';
 import * as path from 'path';
 // eslint-disable-next-line @typescript-eslint/no-require-imports
-const pdfParse = require('pdf-parse');
+const pdfParse = require('pdf-parse') as (
+  buffer: Buffer,
+) => Promise<{ text: string; numpages: number }>;
 
 // Configure pdfjs standard fonts path for proper text rendering
 const standardFontsPath = path.join(
@@ -50,7 +52,9 @@ export class ProcessingProcessor extends WorkerHost {
       this.logger.log('OpenAI client initialized for OCR');
     } else {
       this.openai = null;
-      this.logger.warn('OPENAI_API_KEY not configured - OCR will be unavailable');
+      this.logger.warn(
+        'OPENAI_API_KEY not configured - OCR will be unavailable',
+      );
     }
   }
 
@@ -72,7 +76,9 @@ export class ProcessingProcessor extends WorkerHost {
             job as Job<PdfThumbnailJobData>,
           );
         default:
-          throw new Error(`Unknown job type: ${(job.data as { type: string }).type}`);
+          throw new Error(
+            `Unknown job type: ${(job.data as { type: string }).type}`,
+          );
       }
     } catch (error) {
       this.logger.error(`Job ${job.id} failed: ${error}`);
@@ -198,7 +204,7 @@ export class ProcessingProcessor extends WorkerHost {
 
     // Convert the image
     await job.updateProgress(40);
-    let sharpInstance = sharp(imageBuffer);
+    const sharpInstance = sharp(imageBuffer);
 
     let convertedBuffer: Buffer;
     let mimeType: string;
@@ -221,8 +227,13 @@ export class ProcessingProcessor extends WorkerHost {
           .toBuffer();
         mimeType = 'image/webp';
         break;
-      default:
-        throw new Error(`Unsupported target format: ${targetFormat}`);
+      default: {
+        // TypeScript exhaustiveness check - targetFormat should never reach here
+        const _exhaustiveCheck: never = targetFormat;
+        throw new Error(
+          `Unsupported target format: ${String(_exhaustiveCheck)}`,
+        );
+      }
     }
 
     await job.updateProgress(70);
@@ -236,7 +247,11 @@ export class ProcessingProcessor extends WorkerHost {
     );
 
     // Upload the converted image
-    await this.storageService.uploadFile(newStorageKey, convertedBuffer, mimeType);
+    await this.storageService.uploadFile(
+      newStorageKey,
+      convertedBuffer,
+      mimeType,
+    );
 
     await job.updateProgress(90);
 
@@ -286,7 +301,9 @@ export class ProcessingProcessor extends WorkerHost {
 
     if (isPdf) {
       // For PDFs: Try direct text extraction first (much faster and more reliable)
-      this.logger.log(`Attempting direct text extraction from PDF: ${filename}`);
+      this.logger.log(
+        `Attempting direct text extraction from PDF: ${filename}`,
+      );
 
       try {
         await job.updateProgress(20);
@@ -366,8 +383,12 @@ export class ProcessingProcessor extends WorkerHost {
                 `[Tesseract] Page ${pageNum}: ${result.data.text.length} chars`,
               );
             } catch (tessError) {
-              this.logger.error(`Tesseract failed for page ${pageNum}: ${tessError}`);
-              extractedTexts.push(`[Error extracting text from page ${pageNum}]`);
+              this.logger.error(
+                `Tesseract failed for page ${pageNum}: ${tessError}`,
+              );
+              extractedTexts.push(
+                `[Error extracting text from page ${pageNum}]`,
+              );
             }
           }
 
@@ -421,9 +442,12 @@ export class ProcessingProcessor extends WorkerHost {
           });
 
           fullText = response.choices[0]?.message?.content || '';
-          this.logger.log(`[OpenAI] Extracted ${fullText.length} characters from image`);
+          this.logger.log(
+            `[OpenAI] Extracted ${fullText.length} characters from image`,
+          );
         } catch (error) {
-          const errorMsg = error instanceof Error ? error.message : String(error);
+          const errorMsg =
+            error instanceof Error ? error.message : String(error);
           this.logger.warn(`OpenAI OCR failed: ${errorMsg}`);
           fullText = '';
         }
@@ -435,7 +459,9 @@ export class ProcessingProcessor extends WorkerHost {
         try {
           const result = await Tesseract.recognize(fileBuffer, 'eng');
           fullText = result.data.text;
-          this.logger.log(`[Tesseract] Extracted ${fullText.length} characters from image`);
+          this.logger.log(
+            `[Tesseract] Extracted ${fullText.length} characters from image`,
+          );
         } catch (tessError) {
           this.logger.error(`Tesseract OCR failed: ${tessError}`);
           return {
@@ -482,12 +508,14 @@ export class ProcessingProcessor extends WorkerHost {
             `Generated summary: ${summary?.length || 0} characters`,
           );
         } catch (error) {
-          const errorMsg = error instanceof Error ? error.message : String(error);
+          const errorMsg =
+            error instanceof Error ? error.message : String(error);
           this.logger.error(`Summary generation failed: ${errorMsg}`);
 
           // If quota exceeded, provide helpful message
           if (errorMsg.includes('429') || errorMsg.includes('quota')) {
-            summary = '[Summary unavailable - OpenAI quota exceeded. Text extraction completed using Tesseract.js]';
+            summary =
+              '[Summary unavailable - OpenAI quota exceeded. Text extraction completed using Tesseract.js]';
           } else {
             summary = '[Error generating summary]';
           }
@@ -504,7 +532,12 @@ export class ProcessingProcessor extends WorkerHost {
     await job.updateProgress(95);
 
     // Save OCR results to the database for persistent access
-    const updateData: { ocrText?: string; ocrSummary?: string; ocrProcessedAt: Date; updatedAt: Date } = {
+    const updateData: {
+      ocrText?: string;
+      ocrSummary?: string;
+      ocrProcessedAt: Date;
+      updatedAt: Date;
+    } = {
       ocrProcessedAt: new Date(),
       updatedAt: new Date(),
     };
@@ -519,10 +552,7 @@ export class ProcessingProcessor extends WorkerHost {
       updateData.ocrSummary = summary;
     }
 
-    await this.db
-      .update(files)
-      .set(updateData)
-      .where(eq(files.id, fileId));
+    await this.db.update(files).set(updateData).where(eq(files.id, fileId));
 
     this.logger.log(`Saved OCR results to database for file ${fileId}`);
 
@@ -582,10 +612,6 @@ export class ProcessingProcessor extends WorkerHost {
         message: 'PDF has no pages',
       };
     }
-
-    // Get the first page dimensions
-    const firstPage = pdfDoc.getPage(0);
-    const { width, height } = firstPage.getSize();
 
     await job.updateProgress(50);
 

@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
+import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 
 interface FileItem {
@@ -47,6 +48,7 @@ export function FilePreviewModal({ file, onClose, onDownload }: FilePreviewModal
     } else if (!file && currentFile && !isClosing) {
       handleClose();
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [file, currentFile, isClosing]);
 
   // Fetch preview URL when file changes
@@ -176,10 +178,13 @@ export function FilePreviewModal({ file, onClose, onDownload }: FilePreviewModal
           )}
 
           {!isLoading && !error && previewUrl && isImage && (
-            <img
+            <Image
               src={previewUrl}
               alt={currentFile.name}
+              width={800}
+              height={600}
               className="max-w-full max-h-full object-contain rounded-lg shadow-lg"
+              unoptimized
             />
           )}
 

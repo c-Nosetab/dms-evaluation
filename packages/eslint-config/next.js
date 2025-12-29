@@ -52,6 +52,10 @@ export const nextJsConfig = [
       ...pluginReactHooks.configs.recommended.rules,
       // React scope no longer necessary with new JSX transform.
       "react/react-in-jsx-scope": "off",
+      // TypeScript handles prop validation
+      "react/prop-types": "off",
+      // Allow <img> for flexibility (Next Image is preferred but not required)
+      "@next/next/no-img-element": "warn",
     },
   },
 ];

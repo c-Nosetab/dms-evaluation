@@ -245,6 +245,7 @@ export function DashboardContent({ userName }: DashboardContentProps) {
 		};
 
 		fetchThumbnails();
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [files]);
 
 	const formatFileSize = (bytes: number) => {
@@ -1495,10 +1496,13 @@ export function DashboardContent({ userName }: DashboardContentProps) {
 														<div className='w-full aspect-square bg-(--muted)/30 flex items-center justify-center overflow-hidden'>
 															{file.mimeType.startsWith('image/') &&
 															file.thumbnailUrl ? (
-																<img
+																<Image
 																	src={file.thumbnailUrl}
 																	alt={file.name}
+																	width={200}
+																	height={200}
 																	className='w-full h-full object-cover group-hover:scale-105 transition-transform duration-300'
+																	unoptimized
 																/>
 															) : (
 																<div className='flex justify-center items-center w-16 h-16'>
@@ -1736,10 +1740,13 @@ export function DashboardContent({ userName }: DashboardContentProps) {
 																<div className='w-10 h-10 rounded-lg bg-(--muted)/30 flex items-center justify-center overflow-hidden shrink-0'>
 																	{file.mimeType.startsWith('image/') &&
 																	file.thumbnailUrl ? (
-																		<img
+																		<Image
 																			src={file.thumbnailUrl}
 																			alt={file.name}
+																			width={40}
+																			height={40}
 																			className='w-full h-full object-cover'
+																			unoptimized
 																		/>
 																	) : (
 																		<div className='flex justify-center items-center w-6 h-6'>
