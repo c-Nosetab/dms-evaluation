@@ -2,13 +2,27 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import Image from 'next/image';
-import { Document, Page, pdfjs } from 'react-pdf';
-import 'react-pdf/dist/Page/AnnotationLayer.css';
-import 'react-pdf/dist/Page/TextLayer.css';
+import dynamic from 'next/dynamic';
 import { Button } from '@/components/ui/button';
 
-// Configure PDF.js worker
-pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
+// Dynamically import react-pdf to avoid SSR issues with DOMMatrix
+const Document = dynamic(
+  () => import('react-pdf').then((mod) => {
+    // Configure PDF.js worker after import
+    mod.pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${mod.pdfjs.version}/build/pdf.worker.min.mjs`;
+    return mod.Document;
+  }),
+  { ssr: false }
+);
+
+const Page = dynamic(
+  () => import('react-pdf').then((mod) => mod.Page),
+  { ssr: false }
+);
+
+// Import styles
+import 'react-pdf/dist/Page/AnnotationLayer.css';
+import 'react-pdf/dist/Page/TextLayer.css';
 
 interface FileItem {
   id: string;
