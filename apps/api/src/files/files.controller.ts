@@ -92,6 +92,93 @@ export class FilesController {
         mimeType: f.mimeType,
         sizeBytes: f.sizeBytes,
         folderId: f.folderId,
+        isStarred: f.isStarred,
+        ocrText: f.ocrText || null,
+        ocrSummary: f.ocrSummary || null,
+        ocrProcessedAt: f.ocrProcessedAt?.toISOString() || null,
+        createdAt: f.createdAt.toISOString(),
+        updatedAt: f.updatedAt.toISOString(),
+      })),
+    };
+  }
+
+  /**
+   * Get recently accessed files.
+   * GET /files/recent
+   */
+  @Get('recent')
+  async getRecentFiles(
+    @CurrentUser() user: AuthUser,
+    @Query('limit') limit?: string,
+  ) {
+    const files = await this.filesService.getRecentFiles(
+      user.id,
+      limit ? parseInt(limit, 10) : 20,
+    );
+
+    return {
+      files: files.map((f) => ({
+        id: f.id,
+        name: f.name,
+        mimeType: f.mimeType,
+        sizeBytes: f.sizeBytes,
+        folderId: f.folderId,
+        isStarred: f.isStarred,
+        lastAccessedAt: f.lastAccessedAt?.toISOString() || null,
+        ocrText: f.ocrText || null,
+        ocrSummary: f.ocrSummary || null,
+        ocrProcessedAt: f.ocrProcessedAt?.toISOString() || null,
+        createdAt: f.createdAt.toISOString(),
+        updatedAt: f.updatedAt.toISOString(),
+      })),
+    };
+  }
+
+  /**
+   * Get starred files.
+   * GET /files/starred
+   */
+  @Get('starred')
+  async getStarredFiles(@CurrentUser() user: AuthUser) {
+    const files = await this.filesService.getStarredFiles(user.id);
+
+    return {
+      files: files.map((f) => ({
+        id: f.id,
+        name: f.name,
+        mimeType: f.mimeType,
+        sizeBytes: f.sizeBytes,
+        folderId: f.folderId,
+        isStarred: f.isStarred,
+        ocrText: f.ocrText || null,
+        ocrSummary: f.ocrSummary || null,
+        ocrProcessedAt: f.ocrProcessedAt?.toISOString() || null,
+        createdAt: f.createdAt.toISOString(),
+        updatedAt: f.updatedAt.toISOString(),
+      })),
+    };
+  }
+
+  /**
+   * Get trashed files.
+   * GET /files/trash
+   */
+  @Get('trash')
+  async getTrashedFiles(@CurrentUser() user: AuthUser) {
+    const files = await this.filesService.getTrashedFiles(user.id);
+
+    return {
+      files: files.map((f) => ({
+        id: f.id,
+        name: f.name,
+        mimeType: f.mimeType,
+        sizeBytes: f.sizeBytes,
+        folderId: f.folderId,
+        isStarred: f.isStarred,
+        deletedAt: f.deletedAt?.toISOString() || null,
+        ocrText: f.ocrText || null,
+        ocrSummary: f.ocrSummary || null,
+        ocrProcessedAt: f.ocrProcessedAt?.toISOString() || null,
         createdAt: f.createdAt.toISOString(),
         updatedAt: f.updatedAt.toISOString(),
       })),
@@ -112,6 +199,10 @@ export class FilesController {
       mimeType: file.mimeType,
       sizeBytes: file.sizeBytes,
       folderId: file.folderId,
+      isStarred: file.isStarred,
+      ocrText: file.ocrText || null,
+      ocrSummary: file.ocrSummary || null,
+      ocrProcessedAt: file.ocrProcessedAt?.toISOString() || null,
       createdAt: file.createdAt.toISOString(),
       updatedAt: file.updatedAt.toISOString(),
     };
@@ -182,12 +273,62 @@ export class FilesController {
   }
 
   /**
-   * Delete a file.
+   * Toggle star status for a file.
+   * PATCH /files/:id/star
+   */
+  @Patch(':id/star')
+  async toggleStar(@CurrentUser() user: AuthUser, @Param('id') id: string) {
+    const file = await this.filesService.toggleStar(user.id, id);
+
+    return {
+      id: file.id,
+      name: file.name,
+      isStarred: file.isStarred,
+      updatedAt: file.updatedAt.toISOString(),
+    };
+  }
+
+  /**
+   * Restore a file from trash.
+   * PATCH /files/:id/restore
+   */
+  @Patch(':id/restore')
+  async restoreFile(@CurrentUser() user: AuthUser, @Param('id') id: string) {
+    const file = await this.filesService.restoreFile(user.id, id);
+
+    return {
+      id: file.id,
+      name: file.name,
+      mimeType: file.mimeType,
+      sizeBytes: file.sizeBytes,
+      folderId: file.folderId,
+      isStarred: file.isStarred,
+      createdAt: file.createdAt.toISOString(),
+      updatedAt: file.updatedAt.toISOString(),
+    };
+  }
+
+  /**
+   * Soft delete a file (move to trash).
    * DELETE /files/:id
    */
   @Delete(':id')
   async deleteFile(@CurrentUser() user: AuthUser, @Param('id') id: string) {
     await this.filesService.deleteFile(user.id, id);
+
+    return { success: true };
+  }
+
+  /**
+   * Permanently delete a file from trash.
+   * DELETE /files/:id/permanent
+   */
+  @Delete(':id/permanent')
+  async permanentlyDeleteFile(
+    @CurrentUser() user: AuthUser,
+    @Param('id') id: string,
+  ) {
+    await this.filesService.permanentlyDeleteFile(user.id, id);
 
     return { success: true };
   }

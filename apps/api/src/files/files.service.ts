@@ -1,5 +1,11 @@
-import { Injectable, Inject, NotFoundException, Logger } from '@nestjs/common';
-import { eq, and, isNull, desc } from 'drizzle-orm';
+import {
+  Injectable,
+  Inject,
+  NotFoundException,
+  BadRequestException,
+  Logger,
+} from '@nestjs/common';
+import { eq, and, isNull, desc, isNotNull, not } from 'drizzle-orm';
 import {
   DATABASE_CONNECTION,
   files,
@@ -28,17 +34,9 @@ export interface FileWithUploadUrl {
   uploadUrlExpiresAt: Date;
 }
 
-export interface FileRecord {
-  id: string;
-  userId: string;
-  name: string;
-  mimeType: string;
-  sizeBytes: number;
-  folderId: string | null;
-  storageKey: string;
-  createdAt: Date;
-  updatedAt: Date;
-}
+// Use the Drizzle-inferred type for files
+// This ensures type safety with all columns including OCR fields
+export type FileRecord = typeof files.$inferSelect;
 
 @Injectable()
 export class FilesService {
@@ -104,12 +102,16 @@ export class FilesService {
 
   /**
    * Get all files for a user in a specific folder (or root if folderId is null).
+   * Excludes soft-deleted files.
    */
   async getFiles(
     userId: string,
     folderId: string | null = null,
   ): Promise<FileRecord[]> {
-    const conditions = [eq(files.userId, userId)];
+    const conditions = [
+      eq(files.userId, userId),
+      eq(files.isDeleted, false),
+    ];
 
     if (folderId) {
       conditions.push(eq(files.folderId, folderId));
@@ -145,12 +147,19 @@ export class FilesService {
 
   /**
    * Get a presigned download URL for a file.
+   * Also updates lastAccessedAt for "Recent" tracking.
    */
   async getDownloadUrl(
     userId: string,
     fileId: string,
   ): Promise<{ downloadUrl: string; expiresAt: Date }> {
     const file = await this.getFile(userId, fileId);
+
+    // Update lastAccessedAt for Recent tracking
+    await this.db
+      .update(files)
+      .set({ lastAccessedAt: new Date() })
+      .where(and(eq(files.id, fileId), eq(files.userId, userId)));
 
     const result = await this.storageService.getPresignedDownloadUrl(
       file.storageKey,
@@ -165,25 +174,21 @@ export class FilesService {
   }
 
   /**
-   * Delete a file (both database record and R2 object).
+   * Soft delete a file (moves to trash).
    */
   async deleteFile(userId: string, fileId: string): Promise<void> {
-    const file = await this.getFile(userId, fileId);
+    await this.getFile(userId, fileId); // Verify ownership
 
-    // Delete from R2
-    try {
-      await this.storageService.deleteFile(file.storageKey);
-    } catch (error) {
-      this.logger.warn(`Failed to delete R2 object: ${file.storageKey}`, error);
-      // Continue with database deletion even if R2 fails
-    }
-
-    // Delete from database
     await this.db
-      .delete(files)
+      .update(files)
+      .set({
+        isDeleted: true,
+        deletedAt: new Date(),
+        updatedAt: new Date(),
+      })
       .where(and(eq(files.id, fileId), eq(files.userId, userId)));
 
-    this.logger.debug(`Deleted file: ${fileId}`);
+    this.logger.debug(`Soft deleted file: ${fileId}`);
   }
 
   /**
@@ -251,5 +256,154 @@ export class FilesService {
       .replace(/[^a-zA-Z0-9._-]/g, '_')
       .replace(/_{2,}/g, '_')
       .substring(0, 255);
+  }
+
+  // ============================================
+  // Recent, Starred, and Trash Methods
+  // ============================================
+
+  /**
+   * Get recently accessed files for a user.
+   */
+  async getRecentFiles(userId: string, limit = 20): Promise<FileRecord[]> {
+    const result = await this.db
+      .select()
+      .from(files)
+      .where(
+        and(
+          eq(files.userId, userId),
+          eq(files.isDeleted, false),
+          isNotNull(files.lastAccessedAt),
+        ),
+      )
+      .orderBy(desc(files.lastAccessedAt))
+      .limit(limit);
+
+    return result;
+  }
+
+  /**
+   * Get starred files for a user.
+   */
+  async getStarredFiles(userId: string): Promise<FileRecord[]> {
+    const result = await this.db
+      .select()
+      .from(files)
+      .where(
+        and(
+          eq(files.userId, userId),
+          eq(files.isDeleted, false),
+          eq(files.isStarred, true),
+        ),
+      )
+      .orderBy(desc(files.updatedAt));
+
+    return result;
+  }
+
+  /**
+   * Get trashed files for a user.
+   */
+  async getTrashedFiles(userId: string): Promise<FileRecord[]> {
+    const result = await this.db
+      .select()
+      .from(files)
+      .where(and(eq(files.userId, userId), eq(files.isDeleted, true)))
+      .orderBy(desc(files.deletedAt));
+
+    return result;
+  }
+
+  /**
+   * Toggle starred status for a file.
+   */
+  async toggleStar(userId: string, fileId: string): Promise<FileRecord> {
+    const file = await this.getFile(userId, fileId);
+
+    const [updated] = await this.db
+      .update(files)
+      .set({
+        isStarred: !file.isStarred,
+        updatedAt: new Date(),
+      })
+      .where(and(eq(files.id, fileId), eq(files.userId, userId)))
+      .returning();
+
+    this.logger.debug(
+      `Toggled star for file: ${fileId} to ${updated.isStarred}`,
+    );
+
+    return updated;
+  }
+
+  /**
+   * Restore a file from trash.
+   */
+  async restoreFile(userId: string, fileId: string): Promise<FileRecord> {
+    // Get file including deleted ones
+    const [file] = await this.db
+      .select()
+      .from(files)
+      .where(and(eq(files.id, fileId), eq(files.userId, userId)))
+      .limit(1);
+
+    if (!file) {
+      throw new NotFoundException('File not found');
+    }
+
+    if (!file.isDeleted) {
+      throw new BadRequestException('File is not in trash');
+    }
+
+    const [updated] = await this.db
+      .update(files)
+      .set({
+        isDeleted: false,
+        deletedAt: null,
+        updatedAt: new Date(),
+      })
+      .where(and(eq(files.id, fileId), eq(files.userId, userId)))
+      .returning();
+
+    this.logger.debug(`Restored file from trash: ${fileId}`);
+
+    return updated;
+  }
+
+  /**
+   * Permanently delete a file from trash.
+   */
+  async permanentlyDeleteFile(userId: string, fileId: string): Promise<void> {
+    // Get file including deleted ones
+    const [file] = await this.db
+      .select()
+      .from(files)
+      .where(and(eq(files.id, fileId), eq(files.userId, userId)))
+      .limit(1);
+
+    if (!file) {
+      throw new NotFoundException('File not found');
+    }
+
+    if (!file.isDeleted) {
+      throw new BadRequestException(
+        'File must be in trash before permanent deletion',
+      );
+    }
+
+    // Delete from R2
+    try {
+      await this.storageService.deleteFile(file.storageKey);
+    } catch (error) {
+      this.logger.warn(`Failed to delete R2 object: ${file.storageKey}`, error);
+      // Continue with database deletion even if R2 fails
+    }
+
+    // Delete from database
+    await this.db
+      .delete(files)
+      .where(and(eq(files.id, fileId), eq(files.userId, userId)));
+
+    this.logger.debug(`Permanently deleted file: ${fileId}`);
   }
 }

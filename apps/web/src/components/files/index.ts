@@ -6,3 +6,6 @@ export * from './folder-info-panel';
 export * from './file-preview-modal';
 export * from './rename-dialog';
 export * from './create-folder-dialog';
+export * from './recent-content';
+export * from './starred-content';
+export * from './trash-content';

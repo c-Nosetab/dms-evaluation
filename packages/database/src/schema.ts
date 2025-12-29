@@ -5,6 +5,7 @@ import {
   primaryKey,
   integer,
   bigint,
+  boolean,
   index,
 } from 'drizzle-orm/pg-core';
 import type { AdapterAccountType } from 'next-auth/adapters';
@@ -85,12 +86,17 @@ export const folders = pgTable(
       onDelete: 'cascade',
     }),
     name: text('name').notNull(),
+    isStarred: boolean('isStarred').default(false).notNull(),
+    isDeleted: boolean('isDeleted').default(false).notNull(),
+    deletedAt: timestamp('deletedAt', { mode: 'date' }),
     createdAt: timestamp('createdAt', { mode: 'date' }).notNull().defaultNow(),
     updatedAt: timestamp('updatedAt', { mode: 'date' }).notNull().defaultNow(),
   },
   (table) => [
     index('folder_userId_idx').on(table.userId),
     index('folder_parentId_idx').on(table.parentId),
+    index('folder_isDeleted_idx').on(table.isDeleted),
+    index('folder_isStarred_idx').on(table.isStarred),
   ]
 );
 
@@ -110,12 +116,23 @@ export const files = pgTable(
     storageKey: text('storageKey').notNull(), // R2 path: /{userId}/{fileId}/{filename}
     mimeType: text('mimeType').notNull(),
     sizeBytes: bigint('sizeBytes', { mode: 'number' }).notNull(),
+    isStarred: boolean('isStarred').default(false).notNull(),
+    isDeleted: boolean('isDeleted').default(false).notNull(),
+    deletedAt: timestamp('deletedAt', { mode: 'date' }),
+    lastAccessedAt: timestamp('lastAccessedAt', { mode: 'date' }),
+    // OCR/AI Processing fields
+    ocrText: text('ocrText'), // Extracted text from OCR
+    ocrSummary: text('ocrSummary'), // AI-generated summary
+    ocrProcessedAt: timestamp('ocrProcessedAt', { mode: 'date' }), // When OCR was last run
     createdAt: timestamp('createdAt', { mode: 'date' }).notNull().defaultNow(),
     updatedAt: timestamp('updatedAt', { mode: 'date' }).notNull().defaultNow(),
   },
   (table) => [
     index('file_userId_idx').on(table.userId),
     index('file_folderId_idx').on(table.folderId),
+    index('file_isDeleted_idx').on(table.isDeleted),
+    index('file_isStarred_idx').on(table.isStarred),
+    index('file_lastAccessedAt_idx').on(table.lastAccessedAt),
   ]
 );
 

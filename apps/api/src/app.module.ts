@@ -8,6 +8,7 @@ import { AuthModule, SessionAuthGuard } from './auth';
 import { StorageModule } from './storage';
 import { FilesModule } from './files';
 import { FoldersModule } from './folders';
+import { ProcessingModule } from './processing';
 
 @Module({
   imports: [
@@ -20,6 +21,7 @@ import { FoldersModule } from './folders';
     StorageModule,
     FilesModule,
     FoldersModule,
+    ProcessingModule,
   ],
   controllers: [AppController],
   providers: [

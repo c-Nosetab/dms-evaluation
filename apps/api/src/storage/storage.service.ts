@@ -7,6 +7,7 @@ import {
   HeadObjectCommand,
 } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
+import { Readable } from 'stream';
 
 export interface PresignedUploadResult {
   uploadUrl: string;
@@ -222,5 +223,65 @@ export class StorageService {
       .replace(/[^a-zA-Z0-9._-]/g, '_') // Replace special chars with underscore
       .replace(/_{2,}/g, '_') // Replace multiple underscores with single
       .substring(0, 255); // Limit length
+  }
+
+  /**
+   * Download a file from R2 as a Buffer.
+   * Used for processing jobs that need to manipulate file contents.
+   */
+  async downloadFile(key: string): Promise<Buffer> {
+    const command = new GetObjectCommand({
+      Bucket: this.bucket,
+      Key: key,
+    });
+
+    const response = await this.s3Client.send(command);
+
+    if (!response.Body) {
+      throw new Error(`No body in response for key: ${key}`);
+    }
+
+    // Convert stream to buffer
+    const stream = response.Body as Readable;
+    const chunks: Buffer[] = [];
+
+    for await (const chunk of stream) {
+      chunks.push(Buffer.from(chunk));
+    }
+
+    const buffer = Buffer.concat(chunks);
+    this.logger.debug(`Downloaded ${buffer.length} bytes from key: ${key}`);
+
+    return buffer;
+  }
+
+  /**
+   * Upload a Buffer directly to R2.
+   * Used for processing jobs that create new files.
+   */
+  async uploadFile(
+    key: string,
+    data: Buffer,
+    contentType: string,
+  ): Promise<void> {
+    const command = new PutObjectCommand({
+      Bucket: this.bucket,
+      Key: key,
+      Body: data,
+      ContentType: contentType,
+    });
+
+    await this.s3Client.send(command);
+    this.logger.debug(`Uploaded ${data.length} bytes to key: ${key}`);
+  }
+
+  /**
+   * Generate a unique storage key for a new file.
+   */
+  generateStorageKey(userId: string, filename: string): string {
+    const timestamp = Date.now();
+    const uuid = crypto.randomUUID();
+    const sanitizedFilename = this.sanitizeFilename(filename);
+    return `${userId}/${timestamp}-${uuid}-${sanitizedFilename}`;
   }
 }

@@ -78,6 +78,48 @@ export class FoldersController {
         id: f.id,
         name: f.name,
         parentId: f.parentId,
+        isStarred: f.isStarred,
+        createdAt: f.createdAt.toISOString(),
+        updatedAt: f.updatedAt.toISOString(),
+      })),
+    };
+  }
+
+  /**
+   * Get starred folders.
+   * GET /folders/starred
+   */
+  @Get('starred')
+  async getStarredFolders(@CurrentUser() user: AuthUser) {
+    const folders = await this.foldersService.getStarredFolders(user.id);
+
+    return {
+      folders: folders.map((f) => ({
+        id: f.id,
+        name: f.name,
+        parentId: f.parentId,
+        isStarred: f.isStarred,
+        createdAt: f.createdAt.toISOString(),
+        updatedAt: f.updatedAt.toISOString(),
+      })),
+    };
+  }
+
+  /**
+   * Get trashed folders.
+   * GET /folders/trash
+   */
+  @Get('trash')
+  async getTrashedFolders(@CurrentUser() user: AuthUser) {
+    const folders = await this.foldersService.getTrashedFolders(user.id);
+
+    return {
+      folders: folders.map((f) => ({
+        id: f.id,
+        name: f.name,
+        parentId: f.parentId,
+        isStarred: f.isStarred,
+        deletedAt: f.deletedAt?.toISOString() || null,
         createdAt: f.createdAt.toISOString(),
         updatedAt: f.updatedAt.toISOString(),
       })),
@@ -167,12 +209,60 @@ export class FoldersController {
   }
 
   /**
-   * Delete a folder (and all contents).
+   * Toggle star status for a folder.
+   * PATCH /folders/:id/star
+   */
+  @Patch(':id/star')
+  async toggleStar(@CurrentUser() user: AuthUser, @Param('id') id: string) {
+    const folder = await this.foldersService.toggleStar(user.id, id);
+
+    return {
+      id: folder.id,
+      name: folder.name,
+      isStarred: folder.isStarred,
+      updatedAt: folder.updatedAt.toISOString(),
+    };
+  }
+
+  /**
+   * Restore a folder from trash.
+   * PATCH /folders/:id/restore
+   */
+  @Patch(':id/restore')
+  async restoreFolder(@CurrentUser() user: AuthUser, @Param('id') id: string) {
+    const folder = await this.foldersService.restoreFolder(user.id, id);
+
+    return {
+      id: folder.id,
+      name: folder.name,
+      parentId: folder.parentId,
+      isStarred: folder.isStarred,
+      createdAt: folder.createdAt.toISOString(),
+      updatedAt: folder.updatedAt.toISOString(),
+    };
+  }
+
+  /**
+   * Soft delete a folder (move to trash).
    * DELETE /folders/:id
    */
   @Delete(':id')
   async deleteFolder(@CurrentUser() user: AuthUser, @Param('id') id: string) {
     await this.foldersService.deleteFolder(user.id, id);
+
+    return { success: true };
+  }
+
+  /**
+   * Permanently delete a folder from trash.
+   * DELETE /folders/:id/permanent
+   */
+  @Delete(':id/permanent')
+  async permanentlyDeleteFolder(
+    @CurrentUser() user: AuthUser,
+    @Param('id') id: string,
+  ) {
+    await this.foldersService.permanentlyDeleteFolder(user.id, id);
 
     return { success: true };
   }

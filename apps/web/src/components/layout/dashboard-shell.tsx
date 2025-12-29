@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { Sidebar } from './sidebar';
 import { Header } from './header';
+import { ProcessingProvider } from '@/contexts/processing-context';
 
 interface DashboardShellProps {
   user: {
@@ -18,35 +19,37 @@ export function DashboardShell({ user, children, onSignOut }: DashboardShellProp
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   return (
-    <div className="min-h-screen bg-(--background)">
-      {/* Mobile sidebar overlay */}
-      {isSidebarOpen && (
-        <div
-          className="fixed inset-0 bg-black/50 z-40 lg:hidden"
-          onClick={() => setIsSidebarOpen(false)}
-        />
-      )}
+    <ProcessingProvider>
+      <div className="min-h-screen bg-(--background)">
+        {/* Mobile sidebar overlay */}
+        {isSidebarOpen && (
+          <div
+            className="fixed inset-0 bg-black/50 z-40 lg:hidden"
+            onClick={() => setIsSidebarOpen(false)}
+          />
+        )}
 
-      {/* Sidebar */}
-      <Sidebar
-        isOpen={isSidebarOpen}
-        onClose={() => setIsSidebarOpen(false)}
-      />
-
-      {/* Main content area */}
-      <div className="lg:pl-64">
-        {/* Header */}
-        <Header
-          user={user}
-          onMenuClick={() => setIsSidebarOpen(true)}
-          onSignOut={onSignOut}
+        {/* Sidebar */}
+        <Sidebar
+          isOpen={isSidebarOpen}
+          onClose={() => setIsSidebarOpen(false)}
         />
 
-        {/* Page content */}
-        <main className="p-4 lg:p-6">
-          {children}
-        </main>
+        {/* Main content area */}
+        <div className="lg:pl-64">
+          {/* Header */}
+          <Header
+            user={user}
+            onMenuClick={() => setIsSidebarOpen(true)}
+            onSignOut={onSignOut}
+          />
+
+          {/* Page content */}
+          <main className="p-4 lg:p-6">
+            {children}
+          </main>
+        </div>
       </div>
-    </div>
+    </ProcessingProvider>
   );
 }
