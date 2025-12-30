@@ -12,6 +12,7 @@ interface SearchResult {
   folderId: string | null;
   isStarred: boolean;
   ocrText?: string | null;
+  ocrSummary?: string | null;
   createdAt: string;
 }
 

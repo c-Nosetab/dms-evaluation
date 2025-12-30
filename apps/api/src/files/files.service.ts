@@ -413,8 +413,12 @@ export class FilesService {
   // ============================================
 
   /**
-   * Search files by name and OCR text.
+   * Search files by name, OCR text, and AI-generated summary.
    * Uses case-insensitive ILIKE for PostgreSQL.
+   * This allows users to find files based on:
+   * - Filename matches
+   * - Text extracted from PDFs/documents
+   * - AI descriptions of images (transcribed text + visual content)
    */
   async searchFiles(
     userId: string,
@@ -433,6 +437,7 @@ export class FilesService {
           or(
             ilike(files.name, searchPattern),
             ilike(files.ocrText, searchPattern),
+            ilike(files.ocrSummary, searchPattern),
           ),
         ),
       )
