@@ -177,7 +177,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
 										'justify-start gap-3 w-full transition-all duration-200',
 										'hover:translate-x-1',
 										isActive && 'bg-(--sidebar-accent) shadow-sm',
-										!isActive && 'hover:bg-(--sidebar-accent)/50'
+										!isActive && 'hover:bg-(--sidebar-accent)/50 hover:text-(--sidebar-foreground)'
 									)}
 									style={{ animationDelay: `${index * 50}ms` }}
 									asChild
