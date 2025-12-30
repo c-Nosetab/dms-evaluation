@@ -5,19 +5,34 @@ const API_URL = process.env.INTERNAL_API_URL || process.env.NEXT_PUBLIC_API_URL 
 
 async function proxyRequest(request: NextRequest, path: string) {
   const cookieStore = await cookies();
+
+  // Try multiple cookie name variants (secure prefix used in production HTTPS)
   const sessionToken = cookieStore.get('authjs.session-token')?.value
-    || cookieStore.get('__Secure-authjs.session-token')?.value;
+    || cookieStore.get('__Secure-authjs.session-token')?.value
+    || cookieStore.get('next-auth.session-token')?.value
+    || cookieStore.get('__Secure-next-auth.session-token')?.value;
+
+  // Debug: Log all cookies in production to diagnose auth issues
+  if (process.env.NODE_ENV === 'production') {
+    const allCookies = cookieStore.getAll();
+    console.log('[Proxy] Available cookies:', allCookies.map(c => c.name).join(', '));
+    console.log('[Proxy] Session token found:', !!sessionToken);
+  }
 
   const headers: HeadersInit = {
     'Content-Type': request.headers.get('Content-Type') || 'application/json',
   };
 
-  // Forward the session cookie
+  // Forward the session cookie - try both formats
   if (sessionToken) {
-    headers['Cookie'] = `authjs.session-token=${sessionToken}`;
+    headers['Cookie'] = `authjs.session-token=${sessionToken}; __Secure-authjs.session-token=${sessionToken}`;
   }
 
   const url = `${API_URL}/${path}`;
+
+  if (process.env.NODE_ENV === 'production') {
+    console.log('[Proxy] Forwarding to:', url);
+  }
 
   const fetchOptions: RequestInit = {
     method: request.method,
