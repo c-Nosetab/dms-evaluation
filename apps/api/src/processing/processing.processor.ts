@@ -404,8 +404,8 @@ export class ProcessingProcessor extends WorkerHost {
         }
       }
     } else {
-      // For images: Use OCR directly
-      this.logger.log(`Processing image with OCR: ${filename}`);
+      // For images: Describe the image content (better UX than extracting text)
+      this.logger.log(`Processing image: ${filename}`);
 
       await job.updateProgress(40);
 
@@ -413,9 +413,22 @@ export class ProcessingProcessor extends WorkerHost {
       let mimeType = 'image/png';
       if (fileBuffer[0] === 0xff && fileBuffer[1] === 0xd8) {
         mimeType = 'image/jpeg';
+      } else if (
+        fileBuffer[0] === 0x47 &&
+        fileBuffer[1] === 0x49 &&
+        fileBuffer[2] === 0x46
+      ) {
+        mimeType = 'image/gif';
+      } else if (
+        fileBuffer[0] === 0x52 &&
+        fileBuffer[1] === 0x49 &&
+        fileBuffer[2] === 0x46 &&
+        fileBuffer[3] === 0x46
+      ) {
+        mimeType = 'image/webp';
       }
 
-      // Try OpenAI first if available
+      // Try OpenAI Vision for intelligent image analysis
       if (this.openai) {
         try {
           const base64Image = fileBuffer.toString('base64');
@@ -427,7 +440,12 @@ export class ProcessingProcessor extends WorkerHost {
                 content: [
                   {
                     type: 'text',
-                    text: 'Please extract all text from this image. Return only the extracted text, preserving the original formatting and layout as much as possible. Do not add any commentary or description.',
+                    text: `Describe what you see in this image. Focus on:
+- The main subject and visual elements
+- Colors, setting, and composition
+- Notable details or context
+
+Provide a clear, descriptive summary of the visual content in 2-4 sentences. If text is present, please transcribe the text.`,
                   },
                   {
                     type: 'image_url',
@@ -438,68 +456,55 @@ export class ProcessingProcessor extends WorkerHost {
                 ],
               },
             ],
-            max_tokens: 4096,
+            max_tokens: 1024,
           });
 
-          const extractedContent = response.choices[0]?.message?.content || '';
-
-          // Check if OpenAI returned a "no text found" response
-          const noTextPatterns = [
-            /can't extract text/i,
-            /cannot extract text/i,
-            /no text/i,
-            /unable to process/i,
-            /i'm sorry/i,
-            /doesn't contain.*text/i,
-            /does not contain.*text/i,
-          ];
-
-          const isNoTextResponse = noTextPatterns.some((pattern) =>
-            pattern.test(extractedContent),
+          fullText = response.choices[0]?.message?.content || '';
+          this.logger.log(
+            `[OpenAI] Generated image description: ${fullText.length} characters`,
           );
-
-          if (isNoTextResponse) {
-            this.logger.log('[OpenAI] Image contains no extractable text');
-            fullText = '';
-          } else {
-            fullText = extractedContent;
-            this.logger.log(
-              `[OpenAI] Extracted ${fullText.length} characters from image`,
-            );
-          }
         } catch (error) {
           const errorMsg =
             error instanceof Error ? error.message : String(error);
-          this.logger.warn(`OpenAI OCR failed: ${errorMsg}`);
+          this.logger.warn(`OpenAI Vision failed: ${errorMsg}`);
           fullText = '';
         }
       }
 
-      // Fall back to Tesseract.js
+      // Fall back to Tesseract.js for text extraction if OpenAI is unavailable
       if (!fullText) {
         usedFallback = true;
         try {
           const result = await Tesseract.recognize(fileBuffer, 'eng');
-          fullText = result.data.text;
-          this.logger.log(
-            `[Tesseract] Extracted ${fullText.length} characters from image`,
-          );
+          const tessText = result.data.text.trim();
+          if (tessText.length > 20) {
+            fullText = `[Text extracted from image]\n\n${tessText}`;
+            this.logger.log(
+              `[Tesseract] Extracted ${tessText.length} characters from image`,
+            );
+          } else {
+            fullText =
+              '[Image analysis unavailable - OpenAI API not configured. No significant text detected in image.]';
+            this.logger.log(
+              `[Tesseract] No significant text found in image (${tessText.length} chars)`,
+            );
+          }
         } catch (tessError) {
           this.logger.error(`Tesseract OCR failed: ${tessError}`);
-          return {
-            success: false,
-            message: `OCR failed: ${tessError instanceof Error ? tessError.message : 'Unknown error'}`,
-            ocrText: undefined,
-          };
+          fullText =
+            '[Image analysis failed - unable to process image content]';
         }
       }
     }
 
     await job.updateProgress(90);
     const mode = job.data.mode || 'extract';
+    const isImage = !isPdf;
 
     this.logger.log(
-      `OCR completed for ${filename}: ${fullText.length} characters extracted from ${pageLabel}`,
+      isImage
+        ? `Image processing completed for ${filename}: ${fullText.length} characters`
+        : `OCR completed for ${filename}: ${fullText.length} characters extracted from ${pageLabel}`,
     );
 
     // Generate summary if requested (requires OpenAI)
@@ -508,8 +513,13 @@ export class ProcessingProcessor extends WorkerHost {
 
     if (mode === 'summary' || mode === 'both') {
       if (this.openai) {
-        if (hasExtractableText) {
-          // For documents with text, summarize the text content
+        if (isImage) {
+          // For images: the fullText already contains the description from the first pass
+          // Just use it directly as the summary - no need to re-process
+          this.logger.log(`Using image description as summary for ${filename}`);
+          summary = fullText;
+        } else if (hasExtractableText) {
+          // For PDFs with text, summarize the text content
           this.logger.log(`Generating text summary for ${filename}...`);
 
           try {
@@ -542,55 +552,6 @@ export class ProcessingProcessor extends WorkerHost {
               summary = '[Summary unavailable - OpenAI quota exceeded]';
             } else {
               summary = '[Error generating summary]';
-            }
-          }
-        } else if (!isPdf) {
-          // For images without text, generate a visual description
-          this.logger.log(`Generating image description for ${filename}...`);
-
-          try {
-            // Detect image type
-            let mimeType = 'image/png';
-            if (fileBuffer[0] === 0xff && fileBuffer[1] === 0xd8) {
-              mimeType = 'image/jpeg';
-            }
-
-            const base64Image = fileBuffer.toString('base64');
-            const descResponse = await this.openai.chat.completions.create({
-              model: 'gpt-4o',
-              messages: [
-                {
-                  role: 'user',
-                  content: [
-                    {
-                      type: 'text',
-                      text: 'Please describe this image in 2-3 sentences. Focus on the main subject, key visual elements, and overall composition. Be concise but informative.',
-                    },
-                    {
-                      type: 'image_url',
-                      image_url: {
-                        url: `data:${mimeType};base64,${base64Image}`,
-                      },
-                    },
-                  ],
-                },
-              ],
-              max_tokens: 500,
-            });
-
-            summary = descResponse.choices[0]?.message?.content || undefined;
-            this.logger.log(
-              `Generated image description: ${summary?.length || 0} characters`,
-            );
-          } catch (error) {
-            const errorMsg =
-              error instanceof Error ? error.message : String(error);
-            this.logger.error(`Image description failed: ${errorMsg}`);
-
-            if (errorMsg.includes('429') || errorMsg.includes('quota')) {
-              summary = '[Description unavailable - OpenAI quota exceeded]';
-            } else {
-              summary = '[Error generating description]';
             }
           }
         } else {
@@ -635,20 +596,33 @@ export class ProcessingProcessor extends WorkerHost {
 
     await job.updateProgress(100);
 
-    // Build result based on mode
+    // Build result based on mode and file type
     const extractionMethod = usedFallback
-      ? ' (using Tesseract.js OCR)'
+      ? ' (using Tesseract.js)'
       : isPdf
         ? ' (direct text extraction)'
-        : '';
-    const result: ProcessingJobResult = {
-      success: true,
-      message:
+        : ' (AI vision analysis)';
+
+    let resultMessage: string;
+    if (isImage) {
+      // Image-specific messages
+      resultMessage =
+        mode === 'summary'
+          ? `Generated summary for image${extractionMethod}`
+          : `Analyzed image content${extractionMethod}`;
+    } else {
+      // PDF messages
+      resultMessage =
         mode === 'summary'
           ? `Generated summary from ${pageLabel}${extractionMethod}`
           : mode === 'both'
             ? `Extracted text and generated summary from ${pageLabel}${extractionMethod}`
-            : `Extracted ${fullText.length} characters from ${pageLabel}${extractionMethod}`,
+            : `Extracted ${fullText.length} characters from ${pageLabel}${extractionMethod}`;
+    }
+
+    const result: ProcessingJobResult = {
+      success: true,
+      message: resultMessage,
     };
 
     // Include text if mode is 'extract' or 'both'
