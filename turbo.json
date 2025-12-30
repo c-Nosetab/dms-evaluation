@@ -2,6 +2,7 @@
   "$schema": "https://turborepo.com/schema.json",
   "ui": "tui",
   "globalEnv": [
+    "NODE_ENV",
     "DATABASE_URL",
     "AUTH_SECRET",
     "GOOGLE_CLIENT_ID",
@@ -9,6 +10,7 @@
     "GITHUB_CLIENT_ID",
     "GITHUB_CLIENT_SECRET",
     "NEXTAUTH_URL",
+    "INTERNAL_API_URL",
     "R2_ACCOUNT_ID",
     "CLOUDFLARE_ACCOUNT_ID",
     "R2_ACCESS_KEY_ID",
