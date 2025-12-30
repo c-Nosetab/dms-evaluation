@@ -242,7 +242,7 @@ export function Header({ user, onMenuClick, onSignOut }: HeaderProps) {
           <DropdownMenuTrigger asChild>
             <Button
               variant="ghost"
-              className="flex items-center gap-2 p-1 h-auto btn-press hover:bg-(--muted) transition-all duration-200"
+              className="flex items-center gap-2 p-1 h-auto btn-press hover:bg-(--muted) hover:text-(--foreground) transition-all duration-200"
             >
               <Avatar className="h-8 w-8 ring-2 ring-(--border) ring-offset-1 ring-offset-(--background)">
                 {user.image && <AvatarImage src={user.image} alt={user.name || 'User'} />}
