@@ -2,7 +2,7 @@ import { NestFactory } from '@nestjs/core';
 import cookieParser from 'cookie-parser';
 import { AppModule } from './app.module';
 
-// Railway deploy trigger: 2025-12-29T20:31:00
+// Railway deploy trigger: 2026-01-02 - matchSource field
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
