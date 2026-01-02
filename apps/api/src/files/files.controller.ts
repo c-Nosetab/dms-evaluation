@@ -103,8 +103,9 @@ export class FilesController {
   }
 
   /**
-   * Search files by name and OCR text.
+   * Search files by name, OCR text, and AI summary.
    * GET /files/search?q=query&limit=50
+   * Returns matchSource indicating where the query was found: 'name', 'content', or 'ai'
    */
   @Get('search')
   async searchFiles(
@@ -133,6 +134,7 @@ export class FilesController {
         ocrText: f.ocrText || null,
         ocrSummary: f.ocrSummary || null,
         ocrProcessedAt: f.ocrProcessedAt?.toISOString() || null,
+        matchSource: f.matchSource,
         createdAt: f.createdAt.toISOString(),
         updatedAt: f.updatedAt.toISOString(),
       })),
