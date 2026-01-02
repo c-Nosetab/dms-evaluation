@@ -28,7 +28,9 @@ async function proxyRequest(request: NextRequest, path: string) {
     headers['Cookie'] = `authjs.session-token=${sessionToken}; __Secure-authjs.session-token=${sessionToken}`;
   }
 
-  const url = `${API_URL}/${path}`;
+  // Preserve query string from original request
+  const searchParams = request.nextUrl.searchParams.toString();
+  const url = `${API_URL}/${path}${searchParams ? `?${searchParams}` : ''}`;
 
   if (process.env.NODE_ENV === 'production') {
     console.log('[Proxy] Forwarding to:', url);
