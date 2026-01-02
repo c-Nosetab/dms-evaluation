@@ -13,6 +13,7 @@ interface SearchResult {
   isStarred: boolean;
   ocrText?: string | null;
   ocrSummary?: string | null;
+  matchSource: 'name' | 'content' | 'ai';
   createdAt: string;
 }
 

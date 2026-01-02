@@ -415,17 +415,18 @@ export class FilesService {
   /**
    * Search files by name, OCR text, and AI-generated summary.
    * Uses case-insensitive ILIKE for PostgreSQL.
-   * This allows users to find files based on:
-   * - Filename matches
-   * - Text extracted from PDFs/documents
-   * - AI descriptions of images (transcribed text + visual content)
+   * Returns files with a matchSource indicating where the query was found:
+   * - 'name': Match in filename
+   * - 'content': Match in extracted text (ocrText)
+   * - 'ai': Match in AI-generated summary (ocrSummary)
    */
   async searchFiles(
     userId: string,
     query: string,
     limit = 50,
-  ): Promise<FileRecord[]> {
+  ): Promise<(FileRecord & { matchSource: 'name' | 'content' | 'ai' })[]> {
     const searchPattern = `%${query}%`;
+    const queryLower = query.toLowerCase();
 
     const result = await this.db
       .select()
@@ -444,7 +445,21 @@ export class FilesService {
       .orderBy(desc(files.updatedAt))
       .limit(limit);
 
-    return result;
+    // Determine match source for each result
+    return result.map((file) => {
+      let matchSource: 'name' | 'content' | 'ai' = 'name';
+
+      // Check where the match occurred (priority: name > content > ai)
+      if (file.name.toLowerCase().includes(queryLower)) {
+        matchSource = 'name';
+      } else if (file.ocrText?.toLowerCase().includes(queryLower)) {
+        matchSource = 'content';
+      } else if (file.ocrSummary?.toLowerCase().includes(queryLower)) {
+        matchSource = 'ai';
+      }
+
+      return { ...file, matchSource };
+    });
   }
 
   /**
